@@ -8,30 +8,32 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 
-namespace AlexaBot.Controllers
+namespace AlexaBotApp.Controllers
 {
     // This ASP Controller is created to handle a request. Dependency Injection will provide the Adapter and IBot
     // implementation at runtime. Multiple different IBot implementations running at different endpoints can be
     // achieved by specifying a more specific type for the bot constructor argument.
-    [Route("api/messages")]
     [ApiController]
     public class BotController : ControllerBase
     {
-        private readonly IBotFrameworkHttpAdapter Adapter;
-        private readonly IBot Bot;
+        private readonly IBotFrameworkHttpAdapter _botAdapter;
+        private readonly IBot _bot;
 
-        public BotController(IBotFrameworkHttpAdapter adapter, IBot bot)
+        public BotController(
+            IBotFrameworkHttpAdapter botAdapter,
+            IBot bot)
         {
-            Adapter = adapter;
-            Bot = bot;
+            _botAdapter = botAdapter;
+            _bot = bot;
         }
 
+        [Route("api/messages")]
         [HttpPost, HttpGet]
-        public async Task PostAsync()
+        public async Task BotPostAsync()
         {
             // Delegate the processing of the HTTP POST to the adapter.
             // The adapter will invoke the bot.
-            await Adapter.ProcessAsync(Request, Response, Bot);
+            await _botAdapter.ProcessAsync(Request, Response, _bot);
         }
     }
 }

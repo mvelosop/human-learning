@@ -6,7 +6,7 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
-namespace AlexaBot
+namespace AlexaBotApp
 {
     public class Program
     {

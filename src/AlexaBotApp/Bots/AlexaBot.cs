@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Schema;
 
-namespace AlexaBot
+namespace AlexaBotApp.Bots
 {
-    public class EmptyBot : ActivityHandler
+    public class AlexaBot : ActivityHandler
     {
         protected override async Task OnMembersAddedAsync(IList<ChannelAccount> membersAdded, ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
         {
