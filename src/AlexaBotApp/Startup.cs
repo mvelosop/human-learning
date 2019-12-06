@@ -34,6 +34,8 @@ namespace AlexaBotApp
             services.AddSingleton<IAdapterIntegration, BotAdapterWithErrorHandler>();
             services.AddSingleton<IBotFrameworkHttpAdapter, AlexaAdapterWithErrorHandler>();
 
+            services.AddSingleton<BotConversation>();
+
             // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
             services.AddTransient<IBot, AlexaBot>();
         }

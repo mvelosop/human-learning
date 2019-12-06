@@ -3,7 +3,9 @@
 //
 // Generated with Bot Builder V4 SDK Template for Visual Studio EmptyBot v4.6.2
 
+using System.IO;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
@@ -40,7 +42,16 @@ namespace AlexaBotApp.Controllers
         [HttpPost("api/alexa")]
         public async Task AlexaPostAsync()
         {
-            await _alexaAdapter.ProcessAsync(Request, Response, _bot);
+            Request.EnableBuffering();
+
+            using (var reader = new StreamReader(Request.Body))
+            {
+                var body = await reader.ReadToEndAsync();
+                Request.Body.Position = 0;
+
+                await _alexaAdapter.ProcessAsync(Request, Response, _bot);
+            }
+
         }
     }
 }
