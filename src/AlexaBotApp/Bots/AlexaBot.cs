@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using AlexaBotApp.Infrastructure;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
 using Microsoft.Bot.Schema;
@@ -15,20 +16,36 @@ namespace AlexaBotApp.Bots
     {
         private readonly IAdapterIntegration _botAdapter;
         private readonly IConfiguration _configuration;
+        private readonly ObjectLogger _objectLogger;
         private readonly BotConversation _conversation;
 
         public AlexaBot(
+            ObjectLogger objectLogger,
             BotConversation conversation,
             IAdapterIntegration botAdapter,
             IConfiguration configuration)
         {
+            _objectLogger = objectLogger;
             _conversation = conversation;
             _botAdapter = botAdapter;
             _configuration = configuration;
         }
 
+        public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
+        {
+            await _objectLogger.LogObjectAsync(turnContext.Activity, turnContext.Activity.Id);
+
+            await base.OnTurnAsync(turnContext, cancellationToken);
+        }
         protected override async Task OnEventActivityAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
         {
+            switch (turnContext.Activity.Name)
+            {
+                case "LaunchRequest":
+                    await HandleLaunchRequestAsync(turnContext, cancellationToken);
+                    return;
+            }
+
             await turnContext.SendActivityAsync(
                 $"Event received. Name: {turnContext.Activity.Name}. Value: {turnContext.Activity.Value}. Channel: {turnContext.Activity.ChannelId}");
         }
@@ -71,6 +88,11 @@ namespace AlexaBotApp.Bots
             {
                 await context.SendActivityAsync($"Message to Alexa: \"{turnContext.Activity.Text}\"");
             });
+        }
+
+        private async Task HandleLaunchRequestAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
+        {
+            await turnContext.SendActivityAsync(MessageFactory.Text($"Hola, soy Robotina, Cómo te llamas?", inputHint: InputHints.ExpectingInput));
         }
     }
 }
