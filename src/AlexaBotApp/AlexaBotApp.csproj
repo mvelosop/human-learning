@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <LangVersion>latest</LangVersion>
+    <UserSecretsId>AlexaBotApp-c3251425-cefb-4e09-aca1-d6f18a87ba43</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

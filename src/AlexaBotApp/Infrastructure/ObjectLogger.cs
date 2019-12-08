@@ -24,9 +24,11 @@ namespace AlexaBotApp.Infrastructure
         public async Task LogObjectAsync(object @object, string traceId)
         {
             if (@object is null) throw new ArgumentNullException(nameof(@object));
+            if (string.IsNullOrWhiteSpace(traceId)) throw new ArgumentException("message", nameof(traceId));
+            if (SessionId is null) return;
 
-            var jObject = @object is string stringObject 
-                ? JObject.Parse(stringObject) 
+            var jObject = @object is string stringObject
+                ? JObject.Parse(stringObject)
                 : JsonConvert.DeserializeObject<JObject>(JsonConvert.SerializeObject(@object));
 
             var objectFilename = $"{DateTime.Now:HH.mm.ss.fff}+{traceId.Replace(":", "-")}.json";
