@@ -89,39 +89,42 @@ namespace AlexaBotApp.Bots
             if (turnContext.Activity.ChannelId == "alexa")
             {
                 await EchoBackToBotFramework(turnContext);
+
+                if (turnContext.Activity.Text.Equals("adiós", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    await turnContext.SendActivityAsync(MessageFactory.Text("Adiós Jose! Buenas noches."), cancellationToken);
+
+                    return;
+                }
+
+                var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
+
+                if (turnContext.Activity.Text.StartsWith("trabajar", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    alexaConversation.Phrase = turnContext.Activity.Text.Substring(turnContext.Activity.Text.IndexOf(" ")).Trim();
+
+                    await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
+
+                    await turnContext.SendActivityAsync(MessageFactory.Text($@"Muy bien, vamos a trabajar con ""{alexaConversation.Phrase}"". A ver Jose, di ""{alexaConversation.Phrase}""", inputHint: InputHints.ExpectingInput));
+
+                    return;
+                }
+
+                var replyMessage = string.IsNullOrEmpty(alexaConversation.Phrase)
+                    ? @"Necesito la frase o palabra que vamos a trabajar. Dime: ""Trabajar"", y luego la frase o palabra que quieras"
+                    : GetResultMessage(turnContext, alexaConversation);
+
+                var activity = MessageFactory.Text(replyMessage, inputHint: InputHints.ExpectingInput);
+                await turnContext.SendActivityAsync(activity, cancellationToken);
             }
             else
             {
                 // Save the conversation reference when the message doesn't come from Alexa
                 _conversation.Reference = turnContext.Activity.GetConversationReference();
+
+                await turnContext.SendActivityAsync($@"Echo from AlexaBot: ""{turnContext.Activity.Text}""");
             }
 
-            if (turnContext.Activity.Text.Equals("adiós", StringComparison.InvariantCultureIgnoreCase))
-            {
-                await turnContext.SendActivityAsync(MessageFactory.Text("Adiós Jose! Buenas noches."), cancellationToken);
-
-                return;
-            }
-
-            var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
-
-            if (turnContext.Activity.Text.StartsWith("trabajar", StringComparison.InvariantCultureIgnoreCase))
-            {
-                alexaConversation.Phrase = turnContext.Activity.Text.Substring(turnContext.Activity.Text.IndexOf(" ")).Trim();
-
-                await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
-
-                await turnContext.SendActivityAsync(MessageFactory.Text($@"Muy bien, vamos a trabajar con ""{alexaConversation.Phrase}"". A ver Jose, di ""{alexaConversation.Phrase}""", inputHint: InputHints.ExpectingInput));
-
-                return;
-            }
-
-            var replyMessage = string.IsNullOrEmpty(alexaConversation.Phrase)
-                ? @"Necesito la frase o palabra que vamos a trabajar. Dime: ""Trabajar"", y luego la frase o palabra que quieras"
-                : GetResultMessage(turnContext, alexaConversation);
-
-            var activity = MessageFactory.Text(replyMessage, inputHint: InputHints.ExpectingInput);
-            await turnContext.SendActivityAsync(activity, cancellationToken);
         }
 
         private async Task EchoBackToBotFramework(ITurnContext<IMessageActivity> turnContext)
