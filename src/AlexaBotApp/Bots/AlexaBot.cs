@@ -15,6 +15,23 @@ namespace AlexaBotApp.Bots
 {
     public class AlexaBot : ActivityHandler
     {
+        private static readonly string[] CorrectMessages =
+        {
+            "Excelente, eso es tuvo muy bien!",
+            "Perfecto Jose, excelente!",
+            "Buenísimo Jose, muy bien dicho!",
+        };
+
+        private static readonly string[] TryAgainMessages =
+        {
+            "Vamos a ver, inténtalo otra vez Jose.",
+            "Ya falta poco Jose, prueba de nuevo.",
+            "Casi casi, a ver Jose dilo una vez más.",
+            "Ánimo Jose que tú lo puedes hacer.",
+            "Un poco más Jose, seguro que ahora sí lo dices bien.",
+        };
+
+        private readonly BotStateAccessors _accessors;
         private readonly IAdapterIntegration _botAdapter;
         private readonly IConfiguration _configuration;
         private readonly BotConversation _conversation;
@@ -24,12 +41,14 @@ namespace AlexaBotApp.Bots
             ObjectLogger objectLogger,
             BotConversation conversation,
             IAdapterIntegration botAdapter,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            BotStateAccessors accessors)
         {
             _objectLogger = objectLogger;
             _conversation = conversation;
             _botAdapter = botAdapter;
             _configuration = configuration;
+            _accessors = accessors;
         }
 
         public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
@@ -37,6 +56,8 @@ namespace AlexaBotApp.Bots
             await _objectLogger.LogObjectAsync(turnContext.Activity, turnContext.Activity.Id);
 
             await base.OnTurnAsync(turnContext, cancellationToken);
+
+            await _accessors.SaveChangesAsync(turnContext);
         }
 
         protected override async Task OnEventActivityAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
@@ -77,15 +98,30 @@ namespace AlexaBotApp.Bots
 
             if (turnContext.Activity.Text.Equals("adiós", StringComparison.InvariantCultureIgnoreCase))
             {
-                await turnContext.SendActivityAsync(MessageFactory.Text("Adiós!"), cancellationToken);
+                await turnContext.SendActivityAsync(MessageFactory.Text("Adiós Jose! Buenas noches."), cancellationToken);
+
                 return;
             }
 
+            var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
 
+            if (turnContext.Activity.Text.StartsWith("trabajar", StringComparison.InvariantCultureIgnoreCase))
+            {
+                alexaConversation.Phrase = turnContext.Activity.Text.Substring(turnContext.Activity.Text.IndexOf(" ")).Trim();
 
-            var echoMessage = $@"Entendí: ""{turnContext.Activity.Text}"". Di otra cosa.";
+                await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
 
-            await turnContext.SendActivityAsync(MessageFactory.Text(echoMessage, inputHint: InputHints.ExpectingInput), cancellationToken);
+                await turnContext.SendActivityAsync(MessageFactory.Text($@"Muy bien, vamos a trabajar con ""{alexaConversation.Phrase}"". A ver Jose, di ""{alexaConversation.Phrase}""", inputHint: InputHints.ExpectingInput));
+
+                return;
+            }
+
+            var replyMessage = string.IsNullOrEmpty(alexaConversation.Phrase)
+                ? @"Necesito la frase o palabra que vamos a trabajar. Dime: ""Trabajar"", y luego la frase o palabra que quieras"
+                : GetResultMessage(turnContext, alexaConversation);
+
+            var activity = MessageFactory.Text(replyMessage, inputHint: InputHints.ExpectingInput);
+            await turnContext.SendActivityAsync(activity, cancellationToken);
         }
 
         private async Task EchoBackToBotFramework(ITurnContext<IMessageActivity> turnContext)
@@ -100,9 +136,32 @@ namespace AlexaBotApp.Bots
             });
         }
 
+        private string GetResultMessage(ITurnContext<IMessageActivity> turnContext, AlexaConversation alexaConversation)
+        {
+            var correct = turnContext.Activity.Text.Equals(alexaConversation.Phrase, StringComparison.InvariantCultureIgnoreCase);
+            var random = new Random();
+
+            var resultMessage = correct
+                ? $"{CorrectMessages[random.Next(0, CorrectMessages.Length - 1)]} Ahora dime otra palabra o frase para trabajar."
+                : $@"Hmmm, entendí: ""{turnContext.Activity.Text}"". {TryAgainMessages[random.Next(0, TryAgainMessages.Length - 1)]}. Dime ""{alexaConversation.Phrase}""";
+
+            if (correct)
+            {
+                alexaConversation.Phrase = null;
+            }
+
+            return resultMessage;
+        }
+
         private async Task HandleLaunchRequestAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
         {
-            await turnContext.SendActivityAsync(MessageFactory.Text($"Hola, soy Robotina. Recuerda comenzar una conversación en el Bot. C�mo te llamas?", inputHint: InputHints.ExpectingInput));
+            var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
+
+            var greetingMessage = string.IsNullOrEmpty(alexaConversation.Phrase)
+                ? "Hola, soy Robotina, tienes que decirme qué frase o palabra vamos a trabajar"
+                : $@"Hola, soy Robotina, estamos trabajando la {(alexaConversation.Phrase.Contains(" ") ? "frase" : "palabra")} ""{alexaConversation.Phrase}"". A ver Jose, di ""{alexaConversation.Phrase}""";
+
+            await turnContext.SendActivityAsync(MessageFactory.Text(greetingMessage, inputHint: InputHints.ExpectingInput));
         }
     }
 }

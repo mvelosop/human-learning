@@ -46,6 +46,7 @@ namespace AlexaBotApp
 
             services.AddSingleton<IStorage, MemoryStorage>();
             services.AddSingleton<ConversationState>();
+            services.AddSingleton<BotStateAccessors>();
 
             services.AddSingleton<BotConversation>();
 
