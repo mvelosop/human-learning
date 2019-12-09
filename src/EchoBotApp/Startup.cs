@@ -1,22 +1,17 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-//
-// Generated with Bot Builder V4 SDK Template for Visual Studio EmptyBot v4.6.2
 
-using AlexaBotApp.Adapters;
-using AlexaBotApp.Bots;
-using AlexaBotApp.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Bot.Builder;
-using Microsoft.Bot.Builder.Integration;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.IO;
 
-namespace AlexaBotApp
+using Microsoft.BotBuilderSamples.Bots;
+
+namespace Microsoft.BotBuilderSamples
 {
     public class Startup
     {
@@ -30,28 +25,13 @@ namespace AlexaBotApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             // Create the Bot Framework Adapter with error handling enabled.
-            services.AddSingleton<IAdapterIntegration, BotAdapterWithErrorHandler>();
-            services.AddSingleton<IBotFrameworkHttpAdapter, AlexaAdapterWithErrorHandler>();
-
-            services.AddSingleton(sp => 
-            {
-                var environment = sp.GetRequiredService<IHostingEnvironment>();
-                var logFolder = Path.GetFullPath(Path.Combine(environment.ContentRootPath, $"../../object-logs/"));
-
-                return new ObjectLogger(logFolder);
-            });
-
-            services.AddSingleton<IStorage, MemoryStorage>();
-            services.AddSingleton<ConversationState>();
-            services.AddSingleton<BotStateAccessors>();
-
-            services.AddSingleton<BotConversation>();
+            services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
 
             // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
-            services.AddTransient<IBot, AlexaBot>();
+            services.AddTransient<IBot, EchoBot>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -69,6 +49,7 @@ namespace AlexaBotApp
             app.UseDefaultFiles();
             app.UseStaticFiles();
             app.UseWebSockets();
+            //app.UseHttpsRedirection();
             app.UseMvc();
         }
     }
