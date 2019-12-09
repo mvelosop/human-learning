@@ -6,6 +6,7 @@ using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,8 +17,8 @@ namespace AlexaBotApp.Bots
     {
         private readonly IAdapterIntegration _botAdapter;
         private readonly IConfiguration _configuration;
-        private readonly ObjectLogger _objectLogger;
         private readonly BotConversation _conversation;
+        private readonly ObjectLogger _objectLogger;
 
         public AlexaBot(
             ObjectLogger objectLogger,
@@ -37,6 +38,7 @@ namespace AlexaBotApp.Bots
 
             await base.OnTurnAsync(turnContext, cancellationToken);
         }
+
         protected override async Task OnEventActivityAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
         {
             switch (turnContext.Activity.Name)
@@ -73,7 +75,15 @@ namespace AlexaBotApp.Bots
                 _conversation.Reference = turnContext.Activity.GetConversationReference();
             }
 
-            var echoMessage = $"Echo: {turnContext.Activity.Text} (from {turnContext.Activity.ChannelId}). Something else?";
+            if (turnContext.Activity.Text.Equals("adiós", StringComparison.InvariantCultureIgnoreCase))
+            {
+                await turnContext.SendActivityAsync(MessageFactory.Text("Adiós!"), cancellationToken);
+                return;
+            }
+
+
+
+            var echoMessage = $@"Entendí: ""{turnContext.Activity.Text}"". Di otra cosa.";
 
             await turnContext.SendActivityAsync(MessageFactory.Text(echoMessage, inputHint: InputHints.ExpectingInput), cancellationToken);
         }
@@ -86,13 +96,13 @@ namespace AlexaBotApp.Bots
 
             await _botAdapter.ContinueConversationAsync(botAppId, _conversation.Reference, async (context, token) =>
             {
-                await context.SendActivityAsync($"Message to Alexa: \"{turnContext.Activity.Text}\"");
+                await context.SendActivityAsync($"Enviado a Alexa: \"{turnContext.Activity.Text}\"");
             });
         }
 
         private async Task HandleLaunchRequestAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
         {
-            await turnContext.SendActivityAsync(MessageFactory.Text($"Hola, soy Robotina, C�mo te llamas?", inputHint: InputHints.ExpectingInput));
+            await turnContext.SendActivityAsync(MessageFactory.Text($"Hola, soy Robotina. Recuerda comenzar una conversación en el Bot. C�mo te llamas?", inputHint: InputHints.ExpectingInput));
         }
     }
 }

@@ -44,6 +44,9 @@ namespace AlexaBotApp
                 return new ObjectLogger(logFolder);
             });
 
+            services.AddSingleton<IStorage, MemoryStorage>();
+            services.AddSingleton<ConversationState>();
+
             services.AddSingleton<BotConversation>();
 
             // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
