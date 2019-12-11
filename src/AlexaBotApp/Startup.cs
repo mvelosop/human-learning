@@ -65,6 +65,7 @@ namespace AlexaBotApp
 
             services.AddTransient<ICommandHandler<CreatePhraseExerciseCommand, PhraseExercise>, CreatePhraseExerciseCommandHandler>();
             services.AddTransient<ICommandHandler<RegisterUtteranceCommand, PhraseExercise>, RegisterUtteranceCommandHandler>();
+            services.AddTransient<ICommandHandler<EndExerciseCommand, PhraseExercise>, EndExerciseCommandHandler>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
