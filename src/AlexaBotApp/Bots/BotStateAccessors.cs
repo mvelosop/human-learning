@@ -5,20 +5,20 @@ namespace AlexaBotApp.Bots
 {
     public class BotStateAccessors
     {
-        private readonly ConversationState _conversationState;
+        private readonly UserState _userState;
 
-        public BotStateAccessors(ConversationState conversationState)
+        public BotStateAccessors(UserState userState)
         {
-            _conversationState = conversationState;
+            _userState = userState;
 
-            AlexaConversation = _conversationState.CreateProperty<AlexaConversation>(nameof(AlexaConversation));
+            AlexaConversation = _userState.CreateProperty<AlexaConversation>(nameof(AlexaConversation));
         }
 
         public IStatePropertyAccessor<AlexaConversation> AlexaConversation { get; }
 
         public async Task SaveChangesAsync(ITurnContext turnContext)
         {
-            await _conversationState.SaveChangesAsync(turnContext);
+            await _userState.SaveChangesAsync(turnContext);
         }
     }
 }
