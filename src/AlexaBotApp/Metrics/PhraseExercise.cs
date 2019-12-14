@@ -44,9 +44,7 @@ namespace AlexaBotApp.Metrics
 
         public void End()
         {
-            WasSuccessfull = FinishDate.HasValue;
-            Attempts = Utterances.Count;
-            IsFinished = true;
+            End(false);
         }
 
         public void RegisterUtterance(string recognizedPhrase)
@@ -55,16 +53,23 @@ namespace AlexaBotApp.Metrics
 
             if (recognizedPhrase == TargetPhrase)
             {
-                FinishDate = DateTime.Now;
-                ExerciseDuration = FinishDate - StartDate;
-
-                End();
+                End(true);
             }
         }
 
         public void Start()
         {
             StartDate = DateTime.Now;
+        }
+
+        private void End(bool success)
+        {
+            WasSuccessfull = success;
+
+            FinishDate = DateTime.Now;
+            ExerciseDuration = FinishDate - StartDate;
+            Attempts = Utterances.Count;
+            IsFinished = true;
         }
     }
 }
