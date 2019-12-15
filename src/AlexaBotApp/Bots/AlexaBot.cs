@@ -83,6 +83,10 @@ namespace AlexaBotApp.Bots
                 case "LaunchRequest":
                     await HandleLaunchRequestAsync(turnContext, cancellationToken);
                     return;
+
+                case "StopIntent":
+                    await turnContext.SendActivityAsync(MessageFactory.Text("Terminando la sesión", inputHint: InputHints.IgnoringInput));
+                    return;
             }
 
             await turnContext.SendActivityAsync(
@@ -184,7 +188,7 @@ namespace AlexaBotApp.Bots
                 }
                 else
                 {
-                    await turnContext.SendActivityAsync($@"Echo from AlexaBot: ""{turnContext.Activity.Text}""");
+                    await turnContext.SendActivityAsync($"Echo from AlexaBot: **{turnContext.Activity.Text}**");
                 }
             }
         }
@@ -255,7 +259,7 @@ namespace AlexaBotApp.Bots
 
             await _botAdapter.ContinueConversationAsync(botAppId, _conversation.Reference, async (context, token) =>
             {
-                await context.SendActivityAsync($"Message received: \"**{turnContext.Activity.Text}**\"");
+                await context.SendActivityAsync($"Message received:\n**{turnContext.Activity.Text}**");
             });
         }
 
