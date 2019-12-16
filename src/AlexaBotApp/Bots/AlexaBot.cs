@@ -32,11 +32,13 @@ namespace AlexaBotApp.Bots
 
         private static readonly string[] TryAgainMessages =
         {
-            "Vamos a ver, inténtalo otra vez José Manuel.",
-            "Ya falta poco José Manuel, prueba de nuevo.",
-            "Casi casi, a ver José Manuel dilo una vez más.",
-            "Ánimo José Manuel que tú lo puedes hacer.",
-            "Un poco más José Manuel, seguro que ahora sí lo dices bien.",
+            "Una vez más.",
+            "Prueba de nuevo.",
+            "Intenta otra vez.",
+            "Vamos, tú puedes.",
+            "Un poco más rápido.",
+            "Un poco más seguido.",
+            "Otra vez.",
         };
 
         private readonly BotStateAccessors _accessors;
@@ -117,6 +119,13 @@ namespace AlexaBotApp.Bots
                     await turnContext.SendActivityAsync(MessageFactory.Text("Adiós José Manuel! Buenas noches."), cancellationToken);
 
                     await ClearConversationAsync(turnContext, "end");
+
+                    return;
+                }
+
+                if (turnContext.Activity.Text.Equals("pausa", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    await turnContext.SendActivityAsync(MessageFactory.Text("Muy bien, me pongo en pausa y seguimos luego."), cancellationToken);
 
                     return;
                 }
@@ -278,13 +287,9 @@ namespace AlexaBotApp.Bots
             var correct = turnContext.Activity.Text.Equals(alexaConversation.Phrase, StringComparison.InvariantCultureIgnoreCase);
             var random = new Random();
 
-            var mentionChangeOption = alexaConversation.Count % 3 == 0
-                ? @". También puedes decir: ""cambiar palabra"" o ""eliminar palabra"""
-                : string.Empty;
-
             var resultMessage = correct
                 ? $"{CorrectMessages[random.Next(0, CorrectMessages.Length - 1)]} Ahora dime otra palabra o frase para trabajar."
-                : $@"Hmmm, entendí: ""{turnContext.Activity.Text}"". {TryAgainMessages[random.Next(0, TryAgainMessages.Length - 1)]}{mentionChangeOption}. Dime ""{alexaConversation.Phrase}""";
+                : $@"Hmmm, entendí: ""{turnContext.Activity.Text}"". {TryAgainMessages[random.Next(0, TryAgainMessages.Length - 1)]}. Dime ""{alexaConversation.Phrase}""";
 
             if (correct)
             {
@@ -308,7 +313,7 @@ namespace AlexaBotApp.Bots
 
             var greetingMessage = string.IsNullOrEmpty(alexaConversation.Phrase)
                 ? "Hola, soy tu logopeda virtual, tienes que decirme qué frase o palabra vamos a trabajar"
-                : $@"Hola, soy tu logopeda virtual, estamos trabajando la {(alexaConversation.Phrase.Contains(" ") ? "frase" : "palabra")} ""{alexaConversation.Phrase}"". A ver José Manuel, di ""{alexaConversation.Phrase}""";
+                : $@"Hola, continuamos trabajando la {(alexaConversation.Phrase.Contains(" ") ? "frase" : "palabra")} ""{alexaConversation.Phrase}"". A ver José Manuel, dime ""{alexaConversation.Phrase}""";
 
             await turnContext.SendActivityAsync(MessageFactory.Text(greetingMessage, inputHint: InputHints.ExpectingInput));
         }
