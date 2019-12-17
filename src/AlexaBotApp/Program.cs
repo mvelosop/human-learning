@@ -3,8 +3,11 @@
 //
 // Generated with Bot Builder V4 SDK Template for Visual Studio EmptyBot v4.6.2
 
+using AlexaBotApp.Infrastructure;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
@@ -31,8 +34,19 @@ namespace AlexaBotApp
 
             try
             {
-                Log.Information("Starting web host");
-                CreateWebHostBuilder(args).Build().Run();
+                Log.Information("Creating web host...");
+                var builder = CreateWebHostBuilder(args).Build();
+
+                Log.Information("Migrating database...");
+                using (var scope = builder.Services.CreateScope())
+                using (var dbContext = scope.ServiceProvider.GetService<SpeechTherapyDbContext>())
+                {
+                    dbContext.Database.Migrate();
+                }
+
+                Log.Information("Starting web host...");
+                builder.Run();
+
                 return 0;
             }
             catch (Exception ex)
