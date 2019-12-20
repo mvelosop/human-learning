@@ -154,7 +154,7 @@ namespace AlexaBotApp.Bots
 
                     if (!string.IsNullOrWhiteSpace(alexaConversation.Phrase))
                     {
-                        alexaConversation.CurrentExercise = await CreateExerciseAsync(alexaConversation.Phrase);
+                        alexaConversation.CurrentExercise = await CreateExerciseAsync(alexaConversation);
                         alexaConversation.Count = 0;
 
                         _logger.LogInformation("----- Current exercise saved ({@AlexaConversation})", alexaConversation);
@@ -230,9 +230,9 @@ namespace AlexaBotApp.Bots
             await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
         }
 
-        private async Task<PhraseExercise> CreateExerciseAsync(string phrase)
+        private async Task<PhraseExercise> CreateExerciseAsync(AlexaConversation alexaConversation)
         {
-            var command = new CreatePhraseExerciseCommand(phrase);
+            var command = new CreatePhraseExerciseCommand(alexaConversation.Phrase, alexaConversation.Language);
             var handler = _serviceProvider.GetService<ICommandHandler<CreatePhraseExerciseCommand, PhraseExercise>>();
 
             return await handler.HandleAsync(command);
