@@ -134,14 +134,14 @@ namespace AlexaBotApp.Bots
                 {
                     await ClearConversationAsync(turnContext, "end");
 
-                    commandConfirmation = "Acabo de dar por terminado el ejercicio, ahora ";
+                    commandConfirmation = "Acabo de dar por terminado el ejercicio, así que ";
                 }
 
                 if (turnContext.Activity.Text.Equals("eliminar palabra", StringComparison.CurrentCultureIgnoreCase))
                 {
                     await ClearConversationAsync(turnContext, "delete");
 
-                    commandConfirmation = "Acabo de eliminar el ejercicio, ahora ";
+                    commandConfirmation = "Acabo de eliminar el ejercicio, así que ";
                 }
 
                 var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
@@ -161,7 +161,7 @@ namespace AlexaBotApp.Bots
 
                         await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
 
-                        await turnContext.SendActivityAsync(MessageFactory.Text($@"Muy bien, vamos a trabajar con ""{alexaConversation.Phrase}"". A ver José Manuel, di ""{alexaConversation.Phrase}""", inputHint: InputHints.ExpectingInput));
+                        await turnContext.SendActivityAsync(MessageFactory.Text($@"Muy bien, vamos a trabajar con ""{alexaConversation.Phrase}"". A ver José Manuel, di ""{alexaConversation.Phrase}"" ahora!", inputHint: InputHints.ExpectingInput));
 
                         return;
                     }
@@ -171,7 +171,7 @@ namespace AlexaBotApp.Bots
 
                 if (string.IsNullOrEmpty(alexaConversation.Phrase))
                 {
-                    replyMessage = $@"{commandConfirmation} necesito saber qué vamos a trabajar. Dime: ""Trabajar"", y luego la frase o palabra que quieras.";
+                    replyMessage = $@"{commandConfirmation} necesito saber qué otra palabra vamos a trabajar. Dime: ""Trabajar"", y luego la frase o palabra que quieras.";
                 }
                 else
                 {
@@ -288,8 +288,8 @@ namespace AlexaBotApp.Bots
             var random = new Random();
 
             var resultMessage = correct
-                ? $"{CorrectMessages[random.Next(0, CorrectMessages.Length - 1)]} Ahora dime otra palabra o frase para trabajar."
-                : $@"Hmmm, entendí: ""{turnContext.Activity.Text}"". {TryAgainMessages[random.Next(0, TryAgainMessages.Length - 1)]}. Dime ""{alexaConversation.Phrase}""";
+                ? $"{CorrectMessages[random.Next(0, CorrectMessages.Length - 1)]} Seguimos. Dime otra palabra o frase para trabajar."
+                : $@"Hmmm, entendí: ""{turnContext.Activity.Text}"". {TryAgainMessages[random.Next(0, TryAgainMessages.Length - 1)]}. Dime ""{alexaConversation.Phrase}"" ahora!";
 
             if (correct)
             {
