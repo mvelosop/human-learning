@@ -151,6 +151,7 @@ namespace AlexaBotApp.Bots
                 if (turnContext.Activity.Text.StartsWith(newTargetPhraseUtterance, StringComparison.InvariantCultureIgnoreCase))
                 {
                     alexaConversation.Phrase = GetTargetPhrase(turnContext.Activity.Text);
+                    alexaConversation.Language = turnContext.Activity.Locale;
 
                     if (!string.IsNullOrWhiteSpace(alexaConversation.Phrase))
                     {
