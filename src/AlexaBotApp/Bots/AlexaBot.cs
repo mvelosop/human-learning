@@ -172,7 +172,7 @@ namespace AlexaBotApp.Bots
 
                 if (string.IsNullOrEmpty(alexaConversation.Phrase))
                 {
-                    replyMessage = $@"{commandConfirmation} necesito saber qué otra palabra vamos a trabajar. Dime: ""Trabajar"", y luego la frase o palabra que quieras.";
+                    replyMessage = $@"{commandConfirmation} necesito saber qué otra palabra vamos a trabajar. Dime, ""Trabajar"", y luego la frase o palabra que quieras.";
                 }
                 else
                 {
@@ -269,7 +269,7 @@ namespace AlexaBotApp.Bots
 
             await _botAdapter.ContinueConversationAsync(botAppId, _conversation.Reference, async (context, token) =>
             {
-                await context.SendActivityAsync($"Message received:\n**{turnContext.Activity.Text}**");
+                await context.SendActivityAsync($"Message received ({turnContext.Activity.Locale}):\n**{turnContext.Activity.Text}**");
             });
         }
 
