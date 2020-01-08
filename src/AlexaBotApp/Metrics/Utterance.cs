@@ -6,7 +6,7 @@ namespace AlexaBotApp.Metrics
     {
         public DateTime Date { get; set; }
 
-        public PhraseExercise Exercise { get; set; }
+        public Exercise Exercise { get; set; }
 
         public int ExerciseId { get; set; }
 

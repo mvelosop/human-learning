@@ -10,7 +10,7 @@ namespace AlexaBotApp.Infrastructure
         {
         }
 
-        public DbSet<PhraseExercise> PhraseExercises { get; set; }
+        public DbSet<Exercise> PhraseExercises { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

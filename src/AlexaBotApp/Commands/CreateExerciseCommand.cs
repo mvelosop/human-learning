@@ -1,10 +1,12 @@
-﻿using System;
+﻿using AlexaBotApp.Metrics;
+using MediatR;
+using System;
 
 namespace AlexaBotApp.Commands
 {
-    public class CreatePhraseExerciseCommand
+    public class CreateExerciseCommand
     {
-        public CreatePhraseExerciseCommand(string targetPhrase, string language)
+        public CreateExerciseCommand(string targetPhrase, string language)
         {
             if (string.IsNullOrWhiteSpace(targetPhrase)) throw new ArgumentException("null or empty", nameof(targetPhrase));
             if (string.IsNullOrWhiteSpace(language)) throw new ArgumentException("message", nameof(language));

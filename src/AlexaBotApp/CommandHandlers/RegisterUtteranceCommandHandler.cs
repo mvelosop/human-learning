@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AlexaBotApp.CommandHandlers
 {
-    public class EndExerciseCommandHandler : ICommandHandler<EndExerciseCommand, PhraseExercise>
+    public class EndExerciseCommandHandler : ICommandHandler<EndExerciseCommand, Exercise>
     {
         private readonly SpeechTherapyDbContext _dbContext;
 
@@ -17,7 +17,7 @@ namespace AlexaBotApp.CommandHandlers
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        public async Task<PhraseExercise> HandleAsync(EndExerciseCommand command)
+        public async Task<Exercise> HandleAsync(EndExerciseCommand command)
         {
             var entity = await _dbContext.PhraseExercises
                 .Include(e => e.Utterances)

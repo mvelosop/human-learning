@@ -63,9 +63,9 @@ namespace AlexaBotApp
                 builder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
             });
 
-            services.AddTransient<ICommandHandler<CreatePhraseExerciseCommand, PhraseExercise>, CreatePhraseExerciseCommandHandler>();
-            services.AddTransient<ICommandHandler<RegisterUtteranceCommand, PhraseExercise>, RegisterUtteranceCommandHandler>();
-            services.AddTransient<ICommandHandler<EndExerciseCommand, PhraseExercise>, EndExerciseCommandHandler>();
+            services.AddTransient<ICommandHandler<CreateExerciseCommand, Exercise>, CreateExerciseCommandHandler>();
+            services.AddTransient<ICommandHandler<RegisterUtteranceCommand, Exercise>, RegisterUtteranceCommandHandler>();
+            services.AddTransient<ICommandHandler<EndExerciseCommand, Exercise>, EndExerciseCommandHandler>();
             services.AddTransient<ICommandHandler<DeleteExerciseCommand>, DeleteExerciseCommandHandler>();
         }
 

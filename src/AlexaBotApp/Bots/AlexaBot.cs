@@ -242,10 +242,10 @@ namespace AlexaBotApp.Bots
             await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
         }
 
-        private async Task<PhraseExercise> CreateExerciseAsync(AlexaConversation alexaConversation)
+        private async Task<Exercise> CreateExerciseAsync(AlexaConversation alexaConversation)
         {
-            var command = new CreatePhraseExerciseCommand(alexaConversation.Phrase, alexaConversation.Language);
-            var handler = _serviceProvider.GetService<ICommandHandler<CreatePhraseExerciseCommand, PhraseExercise>>();
+            var command = new CreateExerciseCommand(alexaConversation.Phrase, alexaConversation.Language);
+            var handler = _serviceProvider.GetService<ICommandHandler<CreateExerciseCommand, Exercise>>();
 
             return await handler.HandleAsync(command);
         }
@@ -287,7 +287,7 @@ namespace AlexaBotApp.Bots
         private async Task EndExerciseAsync(int id)
         {
             var command = new EndExerciseCommand(id);
-            var handler = _serviceProvider.GetService<ICommandHandler<EndExerciseCommand, PhraseExercise>>();
+            var handler = _serviceProvider.GetService<ICommandHandler<EndExerciseCommand, Exercise>>();
 
             await handler.HandleAsync(command);
         }
@@ -330,10 +330,10 @@ namespace AlexaBotApp.Bots
             await turnContext.SendActivityAsync(MessageFactory.Text(greetingMessage, inputHint: InputHints.ExpectingInput));
         }
 
-        private async Task RegisterUtteranceAsync(PhraseExercise currentExercise, string recognizedPhrase)
+        private async Task RegisterUtteranceAsync(Exercise currentExercise, string recognizedPhrase)
         {
             var command = new RegisterUtteranceCommand(currentExercise.Id, recognizedPhrase);
-            var handler = _serviceProvider.GetService<ICommandHandler<RegisterUtteranceCommand, PhraseExercise>>();
+            var handler = _serviceProvider.GetService<ICommandHandler<RegisterUtteranceCommand, Exercise>>();
 
             await handler.HandleAsync(command);
         }
