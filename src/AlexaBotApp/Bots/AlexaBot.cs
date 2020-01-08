@@ -5,6 +5,7 @@ using AlexaBotApp.Commands;
 using AlexaBotApp.Contracts;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
+using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
@@ -46,12 +47,12 @@ namespace AlexaBotApp.Bots
         };
 
         private readonly BotStateAccessors _accessors;
+        private readonly IMediator _mediator;
         private readonly IAdapterIntegration _botAdapter;
         private readonly IConfiguration _configuration;
         private readonly BotConversation _conversation;
         private readonly ILogger<AlexaBot> _logger;
         private readonly ObjectLogger _objectLogger;
-        private readonly IServiceProvider _serviceProvider;
 
         public AlexaBot(
             ObjectLogger objectLogger,
@@ -59,7 +60,7 @@ namespace AlexaBotApp.Bots
             IAdapterIntegration botAdapter,
             IConfiguration configuration,
             BotStateAccessors accessors,
-            IServiceProvider serviceProvider,
+            IMediator mediator,
             ILogger<AlexaBot> logger)
         {
             _objectLogger = objectLogger;
@@ -67,7 +68,7 @@ namespace AlexaBotApp.Bots
             _botAdapter = botAdapter;
             _configuration = configuration;
             _accessors = accessors;
-            _serviceProvider = serviceProvider;
+            _mediator = mediator;
             _logger = logger;
         }
 
@@ -244,18 +245,12 @@ namespace AlexaBotApp.Bots
 
         private async Task<Exercise> CreateExerciseAsync(AlexaConversation alexaConversation)
         {
-            var command = new CreateExerciseCommand(alexaConversation.Phrase, alexaConversation.Language);
-            var handler = _serviceProvider.GetService<ICommandHandler<CreateExerciseCommand, Exercise>>();
-
-            return await handler.HandleAsync(command);
+            return await _mediator.Send(new CreateExerciseCommand(alexaConversation.Phrase, alexaConversation.Language));
         }
 
         private async Task DeleteExerciseAsync(int id)
         {
-            var command = new DeleteExerciseCommand(id);
-            var handler = _serviceProvider.GetService<ICommandHandler<DeleteExerciseCommand>>();
-
-            await handler.HandleAsync(command);
+            await _mediator.Send(new DeleteExerciseCommand(id));
         }
 
         private async Task EchoBackToBotFramework(ITurnContext<IEventActivity> turnContext)
@@ -286,10 +281,7 @@ namespace AlexaBotApp.Bots
 
         private async Task EndExerciseAsync(int id)
         {
-            var command = new EndExerciseCommand(id);
-            var handler = _serviceProvider.GetService<ICommandHandler<EndExerciseCommand, Exercise>>();
-
-            await handler.HandleAsync(command);
+            await _mediator.Send(new EndExerciseCommand(id));
         }
 
         private string GetResultMessage(ITurnContext<IMessageActivity> turnContext, AlexaConversation alexaConversation)
@@ -332,10 +324,7 @@ namespace AlexaBotApp.Bots
 
         private async Task RegisterUtteranceAsync(Exercise currentExercise, string recognizedPhrase)
         {
-            var command = new RegisterUtteranceCommand(currentExercise.Id, recognizedPhrase);
-            var handler = _serviceProvider.GetService<ICommandHandler<RegisterUtteranceCommand, Exercise>>();
-
-            await handler.HandleAsync(command);
+            await _mediator.Send(new RegisterUtteranceCommand(currentExercise.Id, recognizedPhrase));
         }
     }
 }

@@ -2,14 +2,16 @@
 using AlexaBotApp.Contracts;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AlexaBotApp.CommandHandlers
 {
-    public class CreateExerciseCommandHandler : ICommandHandler<CreateExerciseCommand, Exercise>
+    public class CreateExerciseCommandHandler : IRequestHandler<CreateExerciseCommand, Exercise>
     {
         private readonly SpeechTherapyDbContext _dbContext;
 
@@ -18,11 +20,11 @@ namespace AlexaBotApp.CommandHandlers
             _dbContext = dbContext ?? throw new System.ArgumentNullException(nameof(dbContext));
         }
 
-        public async Task<Exercise> HandleAsync(CreateExerciseCommand command)
+        public async Task<Exercise> Handle(CreateExerciseCommand request, CancellationToken cancellationToken)
         {
             await EndUnfinishedExercises();
 
-            var entity = new Exercise(command.TargetPhrase, command.Language);
+            var entity = new Exercise(request.TargetPhrase, request.Language);
 
             entity.Start();
 

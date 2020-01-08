@@ -20,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
+using MediatR;
 
 namespace AlexaBotApp
 {
@@ -63,10 +64,7 @@ namespace AlexaBotApp
                 builder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
             });
 
-            services.AddTransient<ICommandHandler<CreateExerciseCommand, Exercise>, CreateExerciseCommandHandler>();
-            services.AddTransient<ICommandHandler<RegisterUtteranceCommand, Exercise>, RegisterUtteranceCommandHandler>();
-            services.AddTransient<ICommandHandler<EndExerciseCommand, Exercise>, EndExerciseCommandHandler>();
-            services.AddTransient<ICommandHandler<DeleteExerciseCommand>, DeleteExerciseCommandHandler>();
+            services.AddMediatR(typeof(Startup).Assembly);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

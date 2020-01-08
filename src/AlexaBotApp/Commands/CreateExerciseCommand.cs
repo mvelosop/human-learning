@@ -4,7 +4,7 @@ using System;
 
 namespace AlexaBotApp.Commands
 {
-    public class CreateExerciseCommand
+    public class CreateExerciseCommand : IRequest<Exercise>
     {
         public CreateExerciseCommand(string targetPhrase, string language)
         {

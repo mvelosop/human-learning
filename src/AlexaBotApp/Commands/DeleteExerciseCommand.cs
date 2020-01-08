@@ -1,8 +1,9 @@
-﻿using System;
+﻿using MediatR;
+using System;
 
 namespace AlexaBotApp.Commands
 {
-    public class DeleteExerciseCommand
+    public class DeleteExerciseCommand : IRequest<bool>
     {
         public DeleteExerciseCommand(int id)
         {
