@@ -5,6 +5,7 @@ using AlexaBotApp.Commands;
 using AlexaBotApp.Contracts;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
 using Microsoft.Bot.Schema;
@@ -12,8 +13,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -190,16 +194,23 @@ namespace AlexaBotApp.Bots
             }
             else
             {
-                if (turnContext.Activity.Text.Equals("monitor alexa", StringComparison.OrdinalIgnoreCase))
+                var message = turnContext.Activity.Text?.ToLower();
+
+                switch (message ?? "")
                 {
-                    // Save the conversation reference when the message doesn't come from Alexa
-                    _conversation.Reference = turnContext.Activity.GetConversationReference();
-                    await turnContext.SendActivityAsync($@"Alexa monitor is on");
+                    case "":
+                        Debugger.Break();
+                        break;
+
+                    case "monitor alexa":
+                        // Save the conversation reference when the message doesn't come from Alexa
+                        _conversation.Reference = turnContext.Activity.GetConversationReference();
+                        await turnContext.SendActivityAsync($@"Alexa monitor is on");
+
+                        return;
                 }
-                else
-                {
-                    await turnContext.SendActivityAsync($"Echo from AlexaBot: **{turnContext.Activity.Text}**");
-                }
+
+                await turnContext.SendActivityAsync($"Echo from AlexaBot: \"**{turnContext.Activity.Text}**\"");
             }
         }
 
