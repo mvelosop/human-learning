@@ -5,6 +5,7 @@ using AlexaBotApp.Commands;
 using AlexaBotApp.Contracts;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
 using Microsoft.Bot.Schema;
@@ -12,8 +13,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -134,14 +138,14 @@ namespace AlexaBotApp.Bots
                 {
                     await ClearConversationAsync(turnContext, "end");
 
-                    commandConfirmation = "Acabo de dar por terminado el ejercicio, ahora ";
+                    commandConfirmation = "Acabo de dar por terminado el ejercicio, así que ";
                 }
 
                 if (turnContext.Activity.Text.Equals("eliminar palabra", StringComparison.CurrentCultureIgnoreCase))
                 {
                     await ClearConversationAsync(turnContext, "delete");
 
-                    commandConfirmation = "Acabo de eliminar el ejercicio, ahora ";
+                    commandConfirmation = "Acabo de eliminar el ejercicio, así que ";
                 }
 
                 var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
@@ -151,17 +155,18 @@ namespace AlexaBotApp.Bots
                 if (turnContext.Activity.Text.StartsWith(newTargetPhraseUtterance, StringComparison.InvariantCultureIgnoreCase))
                 {
                     alexaConversation.Phrase = GetTargetPhrase(turnContext.Activity.Text);
+                    alexaConversation.Language = turnContext.Activity.Locale;
 
                     if (!string.IsNullOrWhiteSpace(alexaConversation.Phrase))
                     {
-                        alexaConversation.CurrentExercise = await CreateExerciseAsync(alexaConversation.Phrase);
+                        alexaConversation.CurrentExercise = await CreateExerciseAsync(alexaConversation);
                         alexaConversation.Count = 0;
 
                         _logger.LogInformation("----- Current exercise saved ({@AlexaConversation})", alexaConversation);
 
                         await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
 
-                        await turnContext.SendActivityAsync(MessageFactory.Text($@"Muy bien, vamos a trabajar con ""{alexaConversation.Phrase}"". A ver José Manuel, di ""{alexaConversation.Phrase}""", inputHint: InputHints.ExpectingInput));
+                        await turnContext.SendActivityAsync(MessageFactory.Text($@"Muy bien, vamos a trabajar con ""{alexaConversation.Phrase}"". A ver José Manuel, di ""{alexaConversation.Phrase}"" ahora!", inputHint: InputHints.ExpectingInput));
 
                         return;
                     }
@@ -171,7 +176,7 @@ namespace AlexaBotApp.Bots
 
                 if (string.IsNullOrEmpty(alexaConversation.Phrase))
                 {
-                    replyMessage = $@"{commandConfirmation} necesito saber qué vamos a trabajar. Dime: ""Trabajar"", y luego la frase o palabra que quieras.";
+                    replyMessage = $@"{commandConfirmation} necesito saber qué otra palabra vamos a trabajar. Dime, ""Trabajar"", y luego la frase o palabra que quieras.";
                 }
                 else
                 {
@@ -189,16 +194,23 @@ namespace AlexaBotApp.Bots
             }
             else
             {
-                if (turnContext.Activity.Text.Equals("monitor alexa", StringComparison.OrdinalIgnoreCase))
+                var message = turnContext.Activity.Text?.ToLower();
+
+                switch (message ?? "")
                 {
-                    // Save the conversation reference when the message doesn't come from Alexa
-                    _conversation.Reference = turnContext.Activity.GetConversationReference();
-                    await turnContext.SendActivityAsync($@"Alexa monitor is on");
+                    case "":
+                        Debugger.Break();
+                        break;
+
+                    case "monitor alexa":
+                        // Save the conversation reference when the message doesn't come from Alexa
+                        _conversation.Reference = turnContext.Activity.GetConversationReference();
+                        await turnContext.SendActivityAsync($@"Alexa monitor is on");
+
+                        return;
                 }
-                else
-                {
-                    await turnContext.SendActivityAsync($"Echo from AlexaBot: **{turnContext.Activity.Text}**");
-                }
+
+                await turnContext.SendActivityAsync($"Echo from AlexaBot: \"**{turnContext.Activity.Text}**\"");
             }
         }
 
@@ -230,9 +242,9 @@ namespace AlexaBotApp.Bots
             await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
         }
 
-        private async Task<PhraseExercise> CreateExerciseAsync(string phrase)
+        private async Task<PhraseExercise> CreateExerciseAsync(AlexaConversation alexaConversation)
         {
-            var command = new CreatePhraseExerciseCommand(phrase);
+            var command = new CreatePhraseExerciseCommand(alexaConversation.Phrase, alexaConversation.Language);
             var handler = _serviceProvider.GetService<ICommandHandler<CreatePhraseExerciseCommand, PhraseExercise>>();
 
             return await handler.HandleAsync(command);
@@ -268,7 +280,7 @@ namespace AlexaBotApp.Bots
 
             await _botAdapter.ContinueConversationAsync(botAppId, _conversation.Reference, async (context, token) =>
             {
-                await context.SendActivityAsync($"Message received:\n**{turnContext.Activity.Text}**");
+                await context.SendActivityAsync($"Message received ({turnContext.Activity.Locale}):\n**{turnContext.Activity.Text}**");
             });
         }
 
@@ -288,8 +300,8 @@ namespace AlexaBotApp.Bots
             var random = new Random();
 
             var resultMessage = correct
-                ? $"{CorrectMessages[random.Next(0, CorrectMessages.Length - 1)]} Ahora dime otra palabra o frase para trabajar."
-                : $@"Hmmm, entendí: ""{turnContext.Activity.Text}"". {TryAgainMessages[random.Next(0, TryAgainMessages.Length - 1)]}. Dime ""{alexaConversation.Phrase}""";
+                ? $"{CorrectMessages[random.Next(0, CorrectMessages.Length - 1)]} Seguimos. Dime otra palabra o frase para trabajar."
+                : $@"Hmmm, entendí: ""{turnContext.Activity.Text}"". {TryAgainMessages[random.Next(0, TryAgainMessages.Length - 1)]}. Dime ""{alexaConversation.Phrase}"" ahora!";
 
             if (correct)
             {

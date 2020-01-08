@@ -22,7 +22,7 @@ namespace AlexaBotApp.CommandHandlers
         {
             await EndUnfinishedExercises();
 
-            var entity = new PhraseExercise(command.TargetPhrase);
+            var entity = new PhraseExercise(command.TargetPhrase, command.Language);
 
             entity.Start();
 

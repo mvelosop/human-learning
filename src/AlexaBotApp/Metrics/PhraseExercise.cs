@@ -10,9 +10,10 @@ namespace AlexaBotApp.Metrics
         {
         }
 
-        public PhraseExercise(string targetPhrase)
+        public PhraseExercise(string targetPhrase, string language)
         {
             TargetPhrase = targetPhrase;
+            Language = language;
         }
 
         [JsonProperty]
@@ -29,6 +30,9 @@ namespace AlexaBotApp.Metrics
 
         [JsonProperty]
         public bool IsFinished { get; private set; }
+
+        [JsonProperty]
+        public string Language { get; private set; }
 
         [JsonProperty]
         public DateTime? StartDate { get; private set; }

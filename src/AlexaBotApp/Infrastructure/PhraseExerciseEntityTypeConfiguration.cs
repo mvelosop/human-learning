@@ -17,6 +17,8 @@ namespace AlexaBotApp.Infrastructure
                 .IsRequired()
                 .HasMaxLength(150);
 
+            builder.Property(e => e.Language)
+                .HasMaxLength(5);
         }
     }
 }
