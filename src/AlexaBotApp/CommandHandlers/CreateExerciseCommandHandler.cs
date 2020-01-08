@@ -2,27 +2,29 @@
 using AlexaBotApp.Contracts;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AlexaBotApp.CommandHandlers
 {
-    public class CreatePhraseExerciseCommandHandler : ICommandHandler<CreatePhraseExerciseCommand, PhraseExercise>
+    public class CreateExerciseCommandHandler : IRequestHandler<CreateExerciseCommand, Exercise>
     {
         private readonly SpeechTherapyDbContext _dbContext;
 
-        public CreatePhraseExerciseCommandHandler(SpeechTherapyDbContext dbContext)
+        public CreateExerciseCommandHandler(SpeechTherapyDbContext dbContext)
         {
             _dbContext = dbContext ?? throw new System.ArgumentNullException(nameof(dbContext));
         }
 
-        public async Task<PhraseExercise> HandleAsync(CreatePhraseExerciseCommand command)
+        public async Task<Exercise> Handle(CreateExerciseCommand request, CancellationToken cancellationToken)
         {
             await EndUnfinishedExercises();
 
-            var entity = new PhraseExercise(command.TargetPhrase, command.Language);
+            var entity = new Exercise(request.TargetPhrase, request.Language);
 
             entity.Start();
 

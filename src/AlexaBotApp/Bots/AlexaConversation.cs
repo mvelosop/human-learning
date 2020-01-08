@@ -8,7 +8,7 @@ namespace AlexaBotApp.Bots
 
         public int Count { get; set; }
 
-        public PhraseExercise CurrentExercise { get; set; }
+        public Exercise CurrentExercise { get; set; }
 
         public bool GotItRight { get; set; }
 

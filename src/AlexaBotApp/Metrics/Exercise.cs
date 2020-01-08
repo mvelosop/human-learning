@@ -4,13 +4,13 @@ using System.Collections.Generic;
 
 namespace AlexaBotApp.Metrics
 {
-    public class PhraseExercise
+    public class Exercise
     {
-        public PhraseExercise()
+        public Exercise()
         {
         }
 
-        public PhraseExercise(string targetPhrase, string language)
+        public Exercise(string targetPhrase, string language)
         {
             TargetPhrase = targetPhrase;
             Language = language;

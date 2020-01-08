@@ -5,9 +5,9 @@ using System;
 
 namespace AlexaBotApp.Infrastructure
 {
-    public class PhraseExerciseEntityTypeConfiguration : IEntityTypeConfiguration<PhraseExercise>
+    public class PhraseExerciseEntityTypeConfiguration : IEntityTypeConfiguration<Exercise>
     {
-        public void Configure(EntityTypeBuilder<PhraseExercise> builder)
+        public void Configure(EntityTypeBuilder<Exercise> builder)
         {
             builder.ToTable("PhraseExercises", "SpeechTherapy");
 
