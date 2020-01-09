@@ -1,24 +1,14 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
 using AlexaBotApp.Commands;
-using AlexaBotApp.Contracts;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
 using MediatR;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -78,12 +68,14 @@ namespace AlexaBotApp.Bots
 
             await base.OnTurnAsync(turnContext, cancellationToken);
 
+            // ** Save bot state changes
             await _accessors.SaveChangesAsync(turnContext);
         }
 
         protected override async Task OnEventActivityAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
         {
-            await EchoBackToBotFramework(turnContext);
+            // ** Echo event information to monitor bot
+            await EchoEventAsync(turnContext);
 
             switch (turnContext.Activity.Name)
             {
@@ -96,123 +88,93 @@ namespace AlexaBotApp.Bots
                     return;
             }
 
+            // ** Speak back any other event
             await turnContext.SendActivityAsync(
-                $"Event received. Channel: {turnContext.Activity.ChannelId}, Name: {turnContext.Activity.Name}");
-        }
-
-        protected override async Task OnMembersAddedAsync(IList<ChannelAccount> membersAdded, ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
-        {
-            foreach (var member in membersAdded)
-            {
-                if (member.Id != turnContext.Activity.Recipient.Id)
-                {
-                    await turnContext.SendActivityAsync(MessageFactory.Text($"Hello world! Channel: {turnContext.Activity.ChannelId}"), cancellationToken);
-                }
-            }
+                $"Event received: {turnContext.Activity.Name}");
         }
 
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
-            if (turnContext.Activity.ChannelId == "alexa")
+            // ** Echo user message to monitor
+            await EchoUserMessageAsync(turnContext);
+
+            var message = turnContext.Activity.Text.ToLower();
+            var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
+
+            _logger.LogInformation(@"----- Retrieved alexaConversation ({@AlexaConversation})", alexaConversation);
+
+            // ** Handle goodbye message
+            if (message == "adiós")
             {
-                var commandConfirmation = string.Empty;
+                await turnContext.SendActivityAsync(MessageFactory.Text("Adiós José Manuel! Buenas noches."), cancellationToken);
 
-                await EchoBackToBotFramework(turnContext);
+                await ClearConversationAsync(turnContext, "end");
 
-                if (turnContext.Activity.Text.Equals("adiós", StringComparison.InvariantCultureIgnoreCase))
+                return;
+            }
+
+            if (message == "pausa")
+            {
+                await turnContext.SendActivityAsync(MessageFactory.Text("Muy bien, me pongo en pausa y seguimos luego."), cancellationToken);
+
+                return;
+            }
+
+            var commandConfirmation = string.Empty;
+
+            if (message == "cambiar palabra")
+            {
+                await ClearConversationAsync(turnContext, "end");
+
+                commandConfirmation = "Acabo de dar por terminado el ejercicio, así que ";
+            }
+
+            if (message == "eliminar palabra")
+            {
+                await ClearConversationAsync(turnContext, "delete");
+
+                commandConfirmation = "Acabo de eliminar el ejercicio, así que ";
+            }
+
+            if (message.StartsWith(newTargetPhraseUtterance))
+            {
+                alexaConversation.Phrase = GetTargetPhrase(turnContext.Activity.Text);
+                alexaConversation.Language = turnContext.Activity.Locale;
+
+                if (!string.IsNullOrWhiteSpace(alexaConversation.Phrase))
                 {
-                    await turnContext.SendActivityAsync(MessageFactory.Text("Adiós José Manuel! Buenas noches."), cancellationToken);
+                    alexaConversation.CurrentExercise = await CreateExerciseAsync(alexaConversation);
+                    alexaConversation.Count = 0;
 
-                    await ClearConversationAsync(turnContext, "end");
-
-                    return;
-                }
-
-                if (turnContext.Activity.Text.Equals("pausa", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    await turnContext.SendActivityAsync(MessageFactory.Text("Muy bien, me pongo en pausa y seguimos luego."), cancellationToken);
-
-                    return;
-                }
-
-                if (turnContext.Activity.Text.Equals("cambiar palabra", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    await ClearConversationAsync(turnContext, "end");
-
-                    commandConfirmation = "Acabo de dar por terminado el ejercicio, así que ";
-                }
-
-                if (turnContext.Activity.Text.Equals("eliminar palabra", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    await ClearConversationAsync(turnContext, "delete");
-
-                    commandConfirmation = "Acabo de eliminar el ejercicio, así que ";
-                }
-
-                var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
-
-                _logger.LogInformation(@"----- Retrieved alexaConversation ({@AlexaConversation})", alexaConversation);
-
-                if (turnContext.Activity.Text.StartsWith(newTargetPhraseUtterance, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    alexaConversation.Phrase = GetTargetPhrase(turnContext.Activity.Text);
-                    alexaConversation.Language = turnContext.Activity.Locale;
-
-                    if (!string.IsNullOrWhiteSpace(alexaConversation.Phrase))
-                    {
-                        alexaConversation.CurrentExercise = await CreateExerciseAsync(alexaConversation);
-                        alexaConversation.Count = 0;
-
-                        _logger.LogInformation("----- Current exercise saved ({@AlexaConversation})", alexaConversation);
-
-                        await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
-
-                        await turnContext.SendActivityAsync(MessageFactory.Text($@"Muy bien, vamos a trabajar con ""{alexaConversation.Phrase}"". A ver José Manuel, di ""{alexaConversation.Phrase}"" ahora!", inputHint: InputHints.ExpectingInput));
-
-                        return;
-                    }
-                }
-
-                var replyMessage = string.Empty;
-
-                if (string.IsNullOrEmpty(alexaConversation.Phrase))
-                {
-                    replyMessage = $@"{commandConfirmation} necesito saber qué otra palabra vamos a trabajar. Dime, ""Trabajar"", y luego la frase o palabra que quieras.";
-                }
-                else
-                {
-                    _logger.LogInformation(@"----- Registering utterance ""{Utterance}"" for exercise ({@Exercise})", turnContext.Activity.Text, alexaConversation.CurrentExercise);
-
-                    await RegisterUtteranceAsync(alexaConversation.CurrentExercise, turnContext.Activity.Text);
-
-                    replyMessage = GetResultMessage(turnContext, alexaConversation);
+                    _logger.LogInformation("----- Current exercise saved ({@AlexaConversation})", alexaConversation);
 
                     await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
-                }
 
-                var activity = MessageFactory.Text(replyMessage, inputHint: InputHints.ExpectingInput);
-                await turnContext.SendActivityAsync(activity, cancellationToken);
+                    await turnContext.SendActivityAsync(MessageFactory.Text($@"Muy bien, vamos a trabajar con ""{alexaConversation.Phrase}"". A ver José Manuel, di ""{alexaConversation.Phrase}"" ahora!", inputHint: InputHints.ExpectingInput));
+
+                    return;
+                }
+            }
+
+            var replyMessage = string.Empty;
+
+            if (string.IsNullOrEmpty(alexaConversation.Phrase))
+            {
+                replyMessage = $@"{commandConfirmation} necesito saber qué otra palabra vamos a trabajar. Dime, ""Trabajar"", y luego la frase o palabra que quieras.";
             }
             else
             {
-                var message = turnContext.Activity.Text?.ToLower();
+                _logger.LogInformation(@"----- Registering utterance ""{Utterance}"" for exercise ({@Exercise})", turnContext.Activity.Text, alexaConversation.CurrentExercise);
 
-                switch (message ?? "")
-                {
-                    case "":
-                        Debugger.Break();
-                        break;
+                await RegisterUtteranceAsync(alexaConversation.CurrentExercise, turnContext.Activity.Text);
 
-                    case "monitor alexa":
-                        // Save the conversation reference when the message doesn't come from Alexa
-                        _conversation.Reference = turnContext.Activity.GetConversationReference();
-                        await turnContext.SendActivityAsync($@"Alexa monitor is on");
+                replyMessage = GetResultMessage(turnContext, alexaConversation);
 
-                        return;
-                }
-
-                await turnContext.SendActivityAsync($"Echo from AlexaBot: \"**{turnContext.Activity.Text}**\"");
+                await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
             }
+
+            var activity = MessageFactory.Text(replyMessage, inputHint: InputHints.ExpectingInput);
+            await turnContext.SendActivityAsync(activity, cancellationToken);
         }
 
         private async Task ClearConversationAsync(ITurnContext<IMessageActivity> turnContext, string endAction)
@@ -253,29 +215,32 @@ namespace AlexaBotApp.Bots
             await _mediator.Send(new DeleteExerciseCommand(id));
         }
 
-        private async Task EchoBackToBotFramework(ITurnContext<IEventActivity> turnContext)
+        private async Task EchoEventAsync(ITurnContext<IEventActivity> turnContext)
         {
+            // ** Nothing to do if no conversation reference
             if (_conversation.Reference == null) return;
 
+            var eventValue = JsonConvert.SerializeObject(turnContext.Activity.Value, Formatting.Indented);
             var botAppId = string.IsNullOrEmpty(_configuration["MicrosoftAppId"]) ? "*" : _configuration["MicrosoftAppId"];
 
-            var eventValue = JsonConvert.SerializeObject(turnContext.Activity.Value, Formatting.Indented);
-
+            // ** Send proactive message
             await _botAdapter.ContinueConversationAsync(botAppId, _conversation.Reference, async (context, token) =>
             {
                 await context.SendActivityAsync($"Event received:\n```\n{eventValue}\n```");
             });
         }
 
-        private async Task EchoBackToBotFramework(ITurnContext<IMessageActivity> turnContext)
+        private async Task EchoUserMessageAsync(ITurnContext<IMessageActivity> turnContext)
         {
+            // ** Nothing to do if no conversation reference
             if (_conversation.Reference == null) return;
 
             var botAppId = string.IsNullOrEmpty(_configuration["MicrosoftAppId"]) ? "*" : _configuration["MicrosoftAppId"];
 
+            // ** Send proactive message
             await _botAdapter.ContinueConversationAsync(botAppId, _conversation.Reference, async (context, token) =>
             {
-                await context.SendActivityAsync($"Message received ({turnContext.Activity.Locale}):\n**{turnContext.Activity.Text}**");
+                await context.SendActivityAsync($"User said ({turnContext.Activity.Locale}):\n**{turnContext.Activity.Text}**");
             });
         }
 

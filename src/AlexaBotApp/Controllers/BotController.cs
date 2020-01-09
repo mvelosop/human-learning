@@ -1,12 +1,8 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-//
-// Generated with Bot Builder V4 SDK Template for Visual Studio EmptyBot v4.6.2
-
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using AlexaBotApp.Bots;
 using AlexaBotApp.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -23,21 +19,24 @@ namespace AlexaBotApp.Controllers
     [ApiController]
     public class BotController : ControllerBase
     {
-        private readonly ObjectLogger _objectLogger;
-        private readonly IAdapterIntegration _botAdapter;
         private readonly IBotFrameworkHttpAdapter _alexaAdapter;
-        private readonly IBot _bot;
+        private readonly AlexaBot _alexaBot;
+        private readonly MonitorBot _monitorBot;
+        private readonly IAdapterIntegration _botAdapter;
+        private readonly ObjectLogger _objectLogger;
 
         public BotController(
             ObjectLogger objectLogger,
             IAdapterIntegration botAdapter,
             IBotFrameworkHttpAdapter alexaAdapter,
-            IBot bot)
+            AlexaBot alexaBot,
+            MonitorBot monitorBot)
         {
             _objectLogger = objectLogger;
             _botAdapter = botAdapter;
             _alexaAdapter = alexaAdapter;
-            _bot = bot;
+            _alexaBot = alexaBot;
+            _monitorBot = monitorBot;
         }
 
         [HttpPost("api/messages")]
@@ -45,7 +44,7 @@ namespace AlexaBotApp.Controllers
         {
             var authHeader = Request.Headers["Authorization"];
 
-            return await _botAdapter.ProcessActivityAsync(authHeader, activity, _bot.OnTurnAsync, default);
+            return await _botAdapter.ProcessActivityAsync(authHeader, activity, _monitorBot.OnTurnAsync, default);
         }
 
         [HttpPost("api/alexa")]
@@ -64,7 +63,7 @@ namespace AlexaBotApp.Controllers
 
                 Request.Body.Position = 0;
 
-                await _alexaAdapter.ProcessAsync(Request, Response, _bot);
+                await _alexaAdapter.ProcessAsync(Request, Response, _alexaBot);
             }
 
         }
