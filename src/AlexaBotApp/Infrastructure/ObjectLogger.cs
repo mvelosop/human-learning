@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Hosting;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
@@ -8,10 +9,14 @@ namespace AlexaBotApp.Infrastructure
 {
     public class ObjectLogger
     {
-        public ObjectLogger(string logFolder)
+        public ObjectLogger(string environmentName, string logFolder)
         {
+            Enabled = environmentName.Equals("development", StringComparison.OrdinalIgnoreCase);
+
             LogFolder = logFolder;
         }
+
+        public bool Enabled { get; }
 
         public string LogFolder { get; }
 
@@ -25,6 +30,8 @@ namespace AlexaBotApp.Infrastructure
         {
             if (@object is null) throw new ArgumentNullException(nameof(@object));
             if (string.IsNullOrWhiteSpace(traceId)) throw new ArgumentException("message", nameof(traceId));
+
+            if (!Enabled) return;
             if (SessionId is null) return;
 
             var jObject = @object is string stringObject
@@ -38,6 +45,7 @@ namespace AlexaBotApp.Infrastructure
 
         public void SetSessionId(string sessionId)
         {
+            if (!Enabled) return;
             if (sessionId == SessionId) return;
 
             SessionId = sessionId;

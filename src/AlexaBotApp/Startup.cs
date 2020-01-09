@@ -39,7 +39,7 @@ namespace AlexaBotApp
                 var environment = sp.GetRequiredService<IHostingEnvironment>();
                 var logFolder = Path.GetFullPath(Path.Combine(environment.ContentRootPath, $"../../object-logs/"));
 
-                return new ObjectLogger(logFolder);
+                return new ObjectLogger(environment.EnvironmentName, logFolder);
             });
 
             // Bot state
