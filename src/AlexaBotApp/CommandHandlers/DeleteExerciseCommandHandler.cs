@@ -1,5 +1,4 @@
 ﻿using AlexaBotApp.Commands;
-using AlexaBotApp.Contracts;
 using AlexaBotApp.Infrastructure;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

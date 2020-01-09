@@ -1,10 +1,8 @@
 ﻿using AlexaBotApp.Commands;
-using AlexaBotApp.Contracts;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;

@@ -1,15 +1,6 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-//
-// Generated with Bot Builder V4 SDK Template for Visual Studio EmptyBot v4.6.2
-
 using AlexaBotApp.Adapters;
 using AlexaBotApp.Bots;
-using AlexaBotApp.Commands;
-using AlexaBotApp.CommandHandlers;
-using AlexaBotApp.Contracts;
 using AlexaBotApp.Infrastructure;
-using AlexaBotApp.Metrics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -38,11 +29,12 @@ namespace AlexaBotApp
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            // Create the Bot Framework Adapter with error handling enabled.
+            // Bot adapters
             services.AddSingleton<IAdapterIntegration, BotAdapterWithErrorHandler>();
             services.AddSingleton<IBotFrameworkHttpAdapter, AlexaAdapterWithErrorHandler>();
 
-            services.AddSingleton(sp => 
+            // Object logger
+            services.AddSingleton(sp =>
             {
                 var environment = sp.GetRequiredService<IHostingEnvironment>();
                 var logFolder = Path.GetFullPath(Path.Combine(environment.ContentRootPath, $"../../object-logs/"));
@@ -50,20 +42,24 @@ namespace AlexaBotApp
                 return new ObjectLogger(logFolder);
             });
 
+            // Bot state
             services.AddSingleton<IStorage, MemoryStorage>();
             services.AddSingleton<UserState>();
             services.AddSingleton<BotStateAccessors>();
-
+            // Conversation reference temporal store
             services.AddSingleton<BotConversation>();
 
-            // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
-            services.AddTransient<IBot, AlexaBot>();
+            // Bots
+            services.AddTransient<AlexaBot>();
+            services.AddTransient<MonitorBot>();
 
+            // DbContext
             services.AddDbContext<SpeechTherapyDbContext>(builder =>
             {
                 builder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
             });
 
+            // Command processing pipeline
             services.AddMediatR(typeof(Startup).Assembly);
         }
 
