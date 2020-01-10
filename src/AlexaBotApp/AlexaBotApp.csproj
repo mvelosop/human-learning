@@ -23,4 +23,15 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Phonemes\espeak-ng\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Phonemes\espeak-ng\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+
 </Project>

@@ -1,6 +1,7 @@
 using AlexaBotApp.Commands;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
+using AlexaBotApp.Phonemes;
 using MediatR;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
@@ -42,6 +43,7 @@ namespace AlexaBotApp.Bots
         private readonly IConfiguration _configuration;
         private readonly BotConversation _conversation;
         private readonly ILogger<AlexaBot> _logger;
+        private readonly Phonemizer _phonemizer;
         private readonly ObjectLogger _objectLogger;
 
         public AlexaBot(
@@ -51,7 +53,8 @@ namespace AlexaBotApp.Bots
             IConfiguration configuration,
             BotStateAccessors accessors,
             IMediator mediator,
-            ILogger<AlexaBot> logger)
+            ILogger<AlexaBot> logger,
+            Phonemizer phonemizer)
         {
             _objectLogger = objectLogger;
             _conversation = conversation;
@@ -60,6 +63,7 @@ namespace AlexaBotApp.Bots
             _accessors = accessors;
             _mediator = mediator;
             _logger = logger;
+            _phonemizer = phonemizer;
         }
 
         public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
@@ -95,9 +99,6 @@ namespace AlexaBotApp.Bots
 
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
-            // ** Echo user message to monitor
-            await EchoUserMessageAsync(turnContext);
-
             var message = turnContext.Activity.Text.ToLower();
             var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
 
@@ -106,6 +107,9 @@ namespace AlexaBotApp.Bots
             // ** Handle goodbye message
             if (message == "adiós")
             {
+                // ** Echo user message to monitor
+                await EchoUserMessageAsync(turnContext, message);
+
                 await turnContext.SendActivityAsync(MessageFactory.Text("Adiós José Manuel! Buenas noches."), cancellationToken);
 
                 await ClearConversationAsync(turnContext, "end");
@@ -115,6 +119,9 @@ namespace AlexaBotApp.Bots
 
             if (message == "pausa")
             {
+                // ** Echo user message to monitor
+                await EchoUserMessageAsync(turnContext, message);
+
                 await turnContext.SendActivityAsync(MessageFactory.Text("Muy bien, me pongo en pausa y seguimos luego."), cancellationToken);
 
                 return;
@@ -124,6 +131,9 @@ namespace AlexaBotApp.Bots
 
             if (message == "cambiar palabra")
             {
+                // ** Echo user message to monitor
+                await EchoUserMessageAsync(turnContext, message);
+
                 await ClearConversationAsync(turnContext, "end");
 
                 commandConfirmation = "Acabo de dar por terminado el ejercicio, así que ";
@@ -131,6 +141,9 @@ namespace AlexaBotApp.Bots
 
             if (message == "eliminar palabra")
             {
+                // ** Echo user message to monitor
+                await EchoUserMessageAsync(turnContext, message);
+
                 await ClearConversationAsync(turnContext, "delete");
 
                 commandConfirmation = "Acabo de eliminar el ejercicio, así que ";
@@ -138,7 +151,10 @@ namespace AlexaBotApp.Bots
 
             if (message.StartsWith(newTargetPhraseUtterance))
             {
-                alexaConversation.Phrase = GetTargetPhrase(turnContext.Activity.Text);
+                // ** Echo user message to monitor
+                await EchoUserMessageAsync(turnContext, message);
+
+                alexaConversation.Phrase = GetTargetPhrase(message);
                 alexaConversation.Language = turnContext.Activity.Locale;
 
                 if (!string.IsNullOrWhiteSpace(alexaConversation.Phrase))
@@ -164,9 +180,14 @@ namespace AlexaBotApp.Bots
             }
             else
             {
-                _logger.LogInformation(@"----- Registering utterance ""{Utterance}"" for exercise ({@Exercise})", turnContext.Activity.Text, alexaConversation.CurrentExercise);
+                var phonemes = _phonemizer.GetPhonemesAsync(message);
 
-                await RegisterUtteranceAsync(alexaConversation.CurrentExercise, turnContext.Activity.Text);
+                // ** Echo user message to monitor
+                await EchoUserMessageAsync(turnContext, message, phonemes);
+
+                _logger.LogInformation(@"----- Registering utterance ""{Utterance}"" for exercise ({@Exercise})", message, alexaConversation.CurrentExercise);
+
+                await RegisterUtteranceAsync(alexaConversation.CurrentExercise, message);
 
                 replyMessage = GetResultMessage(turnContext, alexaConversation);
 
@@ -230,7 +251,7 @@ namespace AlexaBotApp.Bots
             });
         }
 
-        private async Task EchoUserMessageAsync(ITurnContext<IMessageActivity> turnContext)
+        private async Task EchoUserMessageAsync(ITurnContext<IMessageActivity> turnContext, string message, string phonemes = null)
         {
             // ** Nothing to do if no conversation reference
             if (_conversation.Reference == null) return;
@@ -240,7 +261,7 @@ namespace AlexaBotApp.Bots
             // ** Send proactive message
             await _botAdapter.ContinueConversationAsync(botAppId, _conversation.Reference, async (context, token) =>
             {
-                await context.SendActivityAsync($"User said ({turnContext.Activity.Locale}):\n**{turnContext.Activity.Text}**");
+                await context.SendActivityAsync($"User said ({turnContext.Activity.Locale}):\n**{message}**{(phonemes == null ? null : $"({phonemes})")}");
             });
         }
 

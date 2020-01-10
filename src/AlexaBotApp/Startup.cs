@@ -12,6 +12,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 using MediatR;
+using AlexaBotApp.Phonemes;
+
+using IHostedService = Microsoft.Extensions.Hosting.IHostedService;
 
 namespace AlexaBotApp
 {
@@ -61,6 +64,10 @@ namespace AlexaBotApp
 
             // Command processing pipeline
             services.AddMediatR(typeof(Startup).Assembly);
+
+            // Phonemizer
+            services.AddSingleton<Phonemizer>();
+            services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<Phonemizer>());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
