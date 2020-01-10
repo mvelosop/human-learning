@@ -17,21 +17,20 @@
     <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
   </ItemGroup>
 
-    <ItemGroup>
+  <ItemGroup>
     <Content Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Phonemes\espeak-ng\**" />
+    <Content Include="Phonemizer\espeak-ng\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="Phonemes\espeak-ng\**">
+    <Content Update="Phonemizer\espeak-ng\**">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
 
 </Project>

@@ -1,7 +1,7 @@
 using AlexaBotApp.Commands;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
-using AlexaBotApp.Phonemes;
+using AlexaBotApp.Phonemizer;
 using MediatR;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
@@ -43,7 +43,7 @@ namespace AlexaBotApp.Bots
         private readonly IConfiguration _configuration;
         private readonly BotConversation _conversation;
         private readonly ILogger<AlexaBot> _logger;
-        private readonly Phonemizer _phonemizer;
+        private readonly PhonemizerService _phonemizer;
         private readonly ObjectLogger _objectLogger;
 
         public AlexaBot(
@@ -54,7 +54,7 @@ namespace AlexaBotApp.Bots
             BotStateAccessors accessors,
             IMediator mediator,
             ILogger<AlexaBot> logger,
-            Phonemizer phonemizer)
+            PhonemizerService phonemizer)
         {
             _objectLogger = objectLogger;
             _conversation = conversation;
@@ -180,7 +180,7 @@ namespace AlexaBotApp.Bots
             }
             else
             {
-                var phonemes = _phonemizer.GetPhonemesAsync(message);
+                var phonemes = await _phonemizer.GetPhonemesAsync(message);
 
                 // ** Echo user message to monitor
                 await EchoUserMessageAsync(turnContext, message, phonemes);
@@ -261,7 +261,7 @@ namespace AlexaBotApp.Bots
             // ** Send proactive message
             await _botAdapter.ContinueConversationAsync(botAppId, _conversation.Reference, async (context, token) =>
             {
-                await context.SendActivityAsync($"User said ({turnContext.Activity.Locale}):\n**{message}**{(phonemes == null ? null : $"({phonemes})")}");
+                await context.SendActivityAsync($"User said ({turnContext.Activity.Locale}):\n**{message}**{(phonemes == null ? null : $" => {phonemes}")}");
             });
         }
 

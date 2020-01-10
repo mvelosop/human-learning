@@ -1,46 +1,43 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AlexaBotApp.Phonemes
+namespace AlexaBotApp.Phonemizer
 {
-    public class Phonemizer : BackgroundService
+    public class PhonemizerService : BackgroundService
     {
         private readonly IHostingEnvironment _environment;
+        private readonly StringBuilder _errorBuilder;
         private readonly Process _espeak;
-        private readonly ILogger<Phonemizer> _logger;
+        private readonly ILogger<PhonemizerService> _logger;
 
-        public Phonemizer(
-            ILogger<Phonemizer> logger,
+        public PhonemizerService(
+            ILogger<PhonemizerService> logger,
             IHostingEnvironment environment)
         {
             _logger = logger;
             _environment = environment;
 
             _espeak = new Process();
+            _errorBuilder = new StringBuilder();
         }
 
-        public string GetPhonemesAsync(string word)
+        public async Task<string> GetPhonemesAsync(string word)
         {
-            var phonemes = string.Empty;
+            if (string.IsNullOrWhiteSpace(word)) throw new ArgumentException("must be non empty", nameof(word));
 
-            lock (this)
-            {
-                _logger.LogInformation("----- Getting phonemes for \"{Word}\"", word);
+            _logger.LogInformation("----- Getting phonemes for \"{Word}\"", word);
 
-                _espeak.StandardInput.WriteLine(word.ToLowerInvariant().Trim(' ', '.'));
-                _espeak.StandardInput.Flush();
+            _espeak.StandardInput.WriteLine(word.ToLowerInvariant().Trim(' ', '.'));
 
-                Task.Delay(500).Wait();
+            var phonemes = await _espeak.StandardOutput.ReadLineAsync();
 
-                phonemes = _espeak.StandardOutput.ReadLine();
-
-                _logger.LogInformation("----- Phonemes for \"{Word}\" => \"{Phonemes}\"", word, phonemes);
-            }
+            _logger.LogInformation("----- Phonemes for \"{Word}\" => \"{Phonemes}\"", word, phonemes);
 
             return phonemes;
         }
@@ -49,14 +46,16 @@ namespace AlexaBotApp.Phonemes
         {
             _logger.LogInformation("----- Starting espeak-ng process...");
 
-            var espeakDirectory = Path.Combine(_environment.ContentRootPath, "Phonemes", "espeak-ng");
+            var programDirectory = Path.Combine(_environment.ContentRootPath, "Phonemizer", "espeak-ng");
+            var dataDirectory = Path.Combine(programDirectory, "espeak-ng-data");
 
             var arguments = new StringBuilder();
             arguments.Append($" -ves-419");
             arguments.Append($" -q -x --ipa=2");
             arguments.Append($" --stdout");
+            arguments.Append($" --path=\"{dataDirectory}\"");
 
-            _espeak.StartInfo.FileName = Path.Combine(espeakDirectory, "espeak-ng.exe");
+            _espeak.StartInfo.FileName = Path.Combine(programDirectory, "espeak-ng.exe");
             _espeak.StartInfo.StandardInputEncoding = Encoding.UTF8;
             _espeak.StartInfo.StandardOutputEncoding = Encoding.UTF8;
             _espeak.StartInfo.Arguments = arguments.ToString();
@@ -70,10 +69,11 @@ namespace AlexaBotApp.Phonemes
             stoppingToken.Register(() =>
             {
                 _logger.LogInformation("----- Stopping espeak-ng process...");
-                _espeak.Kill();
+                _espeak.Close();
+                _logger.LogInformation("----- espeak-ng process stopped.");
             });
 
-            return Task.CompletedTask;
+            return Task.CompletedTask; 
         }
     }
 }
