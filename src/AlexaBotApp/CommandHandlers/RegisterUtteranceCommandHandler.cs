@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 
 namespace AlexaBotApp.CommandHandlers
 {
-    public class EndExerciseCommandHandler : IRequestHandler<EndExerciseCommand, Exercise>
+    public class RegisterUtteranceCommandHandler : IRequestHandler<RegisterUtteranceCommand, Exercise>
     {
         private readonly SpeechTherapyDbContext _dbContext;
 
-        public EndExerciseCommandHandler(SpeechTherapyDbContext dbContext)
+        public RegisterUtteranceCommandHandler(SpeechTherapyDbContext dbContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        public async Task<Exercise> Handle(EndExerciseCommand request, CancellationToken cancellationToken)
+        public async Task<Exercise> Handle(RegisterUtteranceCommand request, CancellationToken cancellationToken)
         {
             var entity = await _dbContext.PhraseExercises
                 .Include(e => e.Utterances)
@@ -26,8 +26,9 @@ namespace AlexaBotApp.CommandHandlers
 
             if (entity is null) throw new InvalidOperationException($@"Phrase exercise not found! (id={request.Id})");
 
-            entity.End();
+            entity.RegisterUtterance(request.RecognizedPhrase);
 
+            _dbContext.Update(entity);
             await _dbContext.SaveChangesAsync();
 
             return entity;
