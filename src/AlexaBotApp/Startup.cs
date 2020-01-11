@@ -1,6 +1,8 @@
 using AlexaBotApp.Adapters;
 using AlexaBotApp.Bots;
 using AlexaBotApp.Infrastructure;
+using AlexaBotApp.Phonemizer;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +13,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
-using MediatR;
+
+using IHostedService = Microsoft.Extensions.Hosting.IHostedService;
 
 namespace AlexaBotApp
 {
@@ -61,6 +64,11 @@ namespace AlexaBotApp
 
             // Command processing pipeline
             services.AddMediatR(typeof(Startup).Assembly);
+
+            // Phonemizer
+            services.AddSingleton<PhonemizerService>();
+            services.AddSingleton<IPhonemizerService>(sp => sp.GetRequiredService<PhonemizerService>());
+            services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<PhonemizerService>());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -80,5 +88,6 @@ namespace AlexaBotApp
             app.UseWebSockets();
             app.UseMvc();
         }
+
     }
 }

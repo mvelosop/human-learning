@@ -19,7 +19,7 @@ namespace AlexaBotApp.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("AlexaBotApp.Metrics.PhraseExercise", b =>
+            modelBuilder.Entity("AlexaBotApp.Metrics.Exercise", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -33,7 +33,20 @@ namespace AlexaBotApp.Migrations
 
                     b.Property<bool>("IsFinished");
 
-                    b.Property<string>("Language");
+                    b.Property<string>("Language")
+                        .HasMaxLength(5);
+
+                    b.Property<string>("NormalizedPhonemes")
+                        .IsRequired()
+                        .HasMaxLength(300);
+
+                    b.Property<string>("PersonName")
+                        .IsRequired()
+                        .HasMaxLength(100);
+
+                    b.Property<string>("Phonemes")
+                        .IsRequired()
+                        .HasMaxLength(300);
 
                     b.Property<DateTime?>("StartDate");
 
@@ -58,6 +71,16 @@ namespace AlexaBotApp.Migrations
 
                     b.Property<int>("ExerciseId");
 
+                    b.Property<int?>("LevenshteinDistance");
+
+                    b.Property<string>("NormalizedPhonemes")
+                        .HasMaxLength(300);
+
+                    b.Property<int?>("PercentDeviation");
+
+                    b.Property<string>("Phonemes")
+                        .HasMaxLength(300);
+
                     b.Property<string>("RecognizedPhrase")
                         .HasMaxLength(150);
 
@@ -70,7 +93,7 @@ namespace AlexaBotApp.Migrations
 
             modelBuilder.Entity("AlexaBotApp.Metrics.Utterance", b =>
                 {
-                    b.HasOne("AlexaBotApp.Metrics.PhraseExercise", "Exercise")
+                    b.HasOne("AlexaBotApp.Metrics.Exercise", "Exercise")
                         .WithMany("Utterances")
                         .HasForeignKey("ExerciseId")
                         .OnDelete(DeleteBehavior.Cascade);

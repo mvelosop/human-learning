@@ -10,10 +10,13 @@ namespace AlexaBotApp.Metrics
         {
         }
 
-        public Exercise(string targetPhrase, string language)
+        public Exercise(string personName, string targetPhrase, string language, string phonemes)
         {
+            PersonName = personName;
             TargetPhrase = targetPhrase;
             Language = language;
+            Phonemes = phonemes;
+            NormalizedPhonemes = phonemes.AsNormalizedPhonemes();
         }
 
         [JsonProperty]
@@ -35,6 +38,15 @@ namespace AlexaBotApp.Metrics
         public string Language { get; private set; }
 
         [JsonProperty]
+        public string NormalizedPhonemes { get; private set; }
+
+        [JsonProperty]
+        public string PersonName { get; private set; }
+
+        [JsonProperty]
+        public string Phonemes { get; private set; }
+
+        [JsonProperty]
         public DateTime? StartDate { get; private set; }
 
         [JsonProperty]
@@ -51,14 +63,31 @@ namespace AlexaBotApp.Metrics
             End(false);
         }
 
-        public void RegisterUtterance(string recognizedPhrase)
+        public Utterance RegisterUtterance(string recognizedPhrase, string phonemes)
         {
-            Utterances.Add(new Utterance { Date = DateTime.Now, RecognizedPhrase = recognizedPhrase });
+            var normalizedPhonemes = phonemes.AsNormalizedPhonemes();
+            var levenshteinDistance = normalizedPhonemes.LevenshteinDistanceFrom(NormalizedPhonemes);
+
+            var utterance = new Utterance
+            {
+                Date = DateTime.Now,
+                RecognizedPhrase = recognizedPhrase,
+                Phonemes = phonemes,
+                NormalizedPhonemes = normalizedPhonemes,
+                LevenshteinDistance = levenshteinDistance,
+                PercentDeviation = NormalizedPhonemes.Length > 0
+                    ? 100 * levenshteinDistance / NormalizedPhonemes.Length
+                    : (int?)null
+            };
+
+            Utterances.Add(utterance);
 
             if (recognizedPhrase == TargetPhrase)
             {
                 End(true);
             }
+
+            return utterance;
         }
 
         public void Start()

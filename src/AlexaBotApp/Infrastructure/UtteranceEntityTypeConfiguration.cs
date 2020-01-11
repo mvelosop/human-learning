@@ -15,6 +15,12 @@ namespace AlexaBotApp.Infrastructure
             builder.Property(e => e.RecognizedPhrase)
                 .HasMaxLength(150);
 
+            builder.Property(e => e.Phonemes)
+                .HasMaxLength(300);
+
+            builder.Property(e => e.NormalizedPhonemes)
+                .HasMaxLength(300);
+
             builder.HasOne(e => e.Exercise)
                 .WithMany(p => p.Utterances)
                 .HasForeignKey(e => e.ExerciseId)

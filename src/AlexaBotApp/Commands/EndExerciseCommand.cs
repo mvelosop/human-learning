@@ -4,7 +4,7 @@ using System;
 
 namespace AlexaBotApp.Commands
 {
-    public class RegisterUtteranceCommand : IRequest<Exercise>
+    public class RegisterUtteranceCommand : IRequest<Utterance>
     {
         public RegisterUtteranceCommand(int id, string recognizedPhrase)
         {

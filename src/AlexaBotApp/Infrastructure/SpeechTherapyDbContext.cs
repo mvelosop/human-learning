@@ -14,7 +14,7 @@ namespace AlexaBotApp.Infrastructure
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.ApplyConfiguration(new PhraseExerciseEntityTypeConfiguration());
+            modelBuilder.ApplyConfiguration(new ExerciseEntityTypeConfiguration());
             modelBuilder.ApplyConfiguration(new UtteranceEntityTypeConfiguration());
         }
     }
