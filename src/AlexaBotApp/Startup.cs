@@ -67,6 +67,7 @@ namespace AlexaBotApp
 
             // Phonemizer
             services.AddSingleton<PhonemizerService>();
+            services.AddSingleton<IPhonemizerService>(sp => sp.GetRequiredService<PhonemizerService>());
             services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<PhonemizerService>());
         }
 

@@ -1,6 +1,7 @@
 ﻿using AlexaBotApp.Commands;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
+using AlexaBotApp.Phonemizer;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -12,17 +13,22 @@ namespace AlexaBotApp.CommandHandlers
     public class CreateExerciseCommandHandler : IRequestHandler<CreateExerciseCommand, Exercise>
     {
         private readonly SpeechTherapyDbContext _dbContext;
+        private readonly IPhonemizerService _phonemizer;
 
-        public CreateExerciseCommandHandler(SpeechTherapyDbContext dbContext)
+        public CreateExerciseCommandHandler(
+            SpeechTherapyDbContext dbContext,
+            IPhonemizerService phonemizer)
         {
             _dbContext = dbContext ?? throw new System.ArgumentNullException(nameof(dbContext));
+            _phonemizer = phonemizer ?? throw new System.ArgumentNullException(nameof(phonemizer));
         }
 
         public async Task<Exercise> Handle(CreateExerciseCommand request, CancellationToken cancellationToken)
         {
             await EndUnfinishedExercises();
 
-            var entity = new Exercise(request.TargetPhrase, request.Language);
+            var phonemes = await _phonemizer.GetPhonemesAsync(request.TargetPhrase);
+            var entity = new Exercise(request.PersonName, request.TargetPhrase, request.Language, phonemes);
 
             entity.Start();
 

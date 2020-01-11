@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace AlexaBotApp.Phonemizer
 {
-    public class PhonemizerService : BackgroundService
+    public class PhonemizerService : BackgroundService, IPhonemizerService
     {
         private readonly IHostingEnvironment _environment;
         private readonly StringBuilder _errorBuilder;
@@ -73,7 +73,7 @@ namespace AlexaBotApp.Phonemizer
                 _logger.LogInformation("----- espeak-ng process stopped.");
             });
 
-            return Task.CompletedTask; 
+            return Task.CompletedTask;
         }
     }
 }
