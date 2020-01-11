@@ -5,7 +5,7 @@ using System;
 
 namespace AlexaBotApp.Infrastructure
 {
-    public class PhraseExerciseEntityTypeConfiguration : IEntityTypeConfiguration<Exercise>
+    public class ExerciseEntityTypeConfiguration : IEntityTypeConfiguration<Exercise>
     {
         public void Configure(EntityTypeBuilder<Exercise> builder)
         {
@@ -13,9 +13,21 @@ namespace AlexaBotApp.Infrastructure
 
             builder.HasKey(e => e.Id);
 
+            builder.Property(e => e.PersonName)
+                .IsRequired()
+                .HasMaxLength(100);
+
             builder.Property(e => e.TargetPhrase)
                 .IsRequired()
                 .HasMaxLength(150);
+
+            builder.Property(e => e.Phonemes)
+                .IsRequired()
+                .HasMaxLength(300);
+
+            builder.Property(e => e.NormalizedPhonemes)
+                .IsRequired()
+                .HasMaxLength(300);
 
             builder.Property(e => e.Language)
                 .HasMaxLength(5);

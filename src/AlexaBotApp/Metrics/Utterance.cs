@@ -12,6 +12,14 @@ namespace AlexaBotApp.Metrics
 
         public int Id { get; set; }
 
+        public int LevenshteinDistance { get; set; }
+
+        public string NormalizedPhonemes { get; set; }
+
+        public int PercentDeviation { get; set; }
+
+        public string Phonemes { get; set; }
+
         public string RecognizedPhrase { get; set; }
     }
 }

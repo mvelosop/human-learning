@@ -10,10 +10,12 @@ namespace AlexaBotApp.Metrics
         {
         }
 
-        public Exercise(string targetPhrase, string language)
+        public Exercise(string personName, string targetPhrase, string language, string phonemes)
         {
+            PersonName = personName;
             TargetPhrase = targetPhrase;
             Language = language;
+            Phonemes = phonemes;
         }
 
         [JsonProperty]
@@ -33,6 +35,15 @@ namespace AlexaBotApp.Metrics
 
         [JsonProperty]
         public string Language { get; private set; }
+
+        [JsonProperty]
+        public string NormalizedPhonemes { get; private set; }
+
+        [JsonProperty]
+        public string PersonName { get; private set; }
+
+        [JsonProperty]
+        public string Phonemes { get; private set; }
 
         [JsonProperty]
         public DateTime? StartDate { get; private set; }
