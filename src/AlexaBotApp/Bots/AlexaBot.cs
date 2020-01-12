@@ -1,6 +1,7 @@
 using AlexaBotApp.Commands;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
+using Bot.Builder.Community.Adapters.Alexa.Directives;
 using MediatR;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
@@ -324,12 +325,41 @@ namespace AlexaBotApp.Bots
                 ? "Hola, soy tu logopeda virtual, tienes que decirme qué frase o palabra vamos a trabajar"
                 : $@"Hola, continuamos trabajando la {(alexaConversation.Phrase.Contains(" ") ? "frase" : "palabra")} ""{alexaConversation.Phrase}"". A ver José Manuel, dime ""{alexaConversation.Phrase}""";
 
-            await turnContext.SendActivityAsync(MessageFactory.Text(greetingMessage, inputHint: InputHints.ExpectingInput));
+            DisplayDirective directive = new DisplayDirective()
+                                        {
+                                            Template = GenerateImageTemplate()
+                                        };
+
+            turnContext.AlexaResponseDirectives().Add(directive);
+            await turnContext.SendActivityAsync(greetingMessage, cancellationToken: cancellationToken);
         }
 
         private async Task<Utterance> RegisterUtteranceAsync(Exercise currentExercise, string recognizedPhrase)
         {
             return await _mediator.Send(new RegisterUtteranceCommand(currentExercise.Id, recognizedPhrase));
+        }
+
+
+        private DisplayRenderBodyTemplate6 GenerateImageTemplate()
+        {
+            var displayTemplate = new DisplayRenderBodyTemplate6()
+            {
+                BackButton = BackButtonVisibility.HIDDEN,
+                TextContent = new TextContent() { PrimaryText = new InnerTextContent() { Text = "Human learning" } },
+                Token = "string",
+            };
+            displayTemplate.BackgroundImage = new Image()
+            {
+                ContentDescription = "background",                
+                Sources = new ImageSource[]
+                    {
+                        new ImageSource()
+                        {
+                            Url = "https://i.blogs.es/69fdcc/star-wars-saga/2560_3000.jpg"
+                        }
+                    }
+            };
+            return displayTemplate;
         }
     }
 }
