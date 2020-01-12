@@ -2,6 +2,7 @@ using AlexaBotApp.Adapters;
 using AlexaBotApp.Bots;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Phonemizer;
+using Bot.Builder.Community.Adapters.Alexa.Integration.AspNet.Core;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -34,7 +35,7 @@ namespace AlexaBotApp
 
             // Bot adapters
             services.AddSingleton<IAdapterIntegration, BotAdapterWithErrorHandler>();
-            services.AddSingleton<IBotFrameworkHttpAdapter, AlexaAdapterWithErrorHandler>();
+            services.AddSingleton<IAlexaHttpAdapter, AlexaAdapterWithErrorHandler>();
 
             // Object logger
             services.AddSingleton(sp =>

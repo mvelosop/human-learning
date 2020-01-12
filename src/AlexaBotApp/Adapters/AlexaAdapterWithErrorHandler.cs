@@ -1,4 +1,5 @@
 ﻿using Bot.Builder.Community.Adapters.Alexa;
+using Bot.Builder.Community.Adapters.Alexa.Integration.AspNet.Core;
 using Bot.Builder.Community.Adapters.Alexa.Middleware;
 using Microsoft.Extensions.Logging;
 using System;
@@ -8,10 +9,10 @@ using System.Threading.Tasks;
 
 namespace AlexaBotApp.Adapters
 {
-    public class AlexaAdapterWithErrorHandler : AlexaAdapter
+    public class AlexaAdapterWithErrorHandler : AlexaHttpAdapter
     {
         public AlexaAdapterWithErrorHandler(ILogger<AlexaAdapter> logger)
-            : base(new AlexaAdapterOptions(), logger)
+            : base(true)
         {
             //Adapter.Use(new AlexaIntentRequestToMessageActivityMiddleware());
 
@@ -19,12 +20,14 @@ namespace AlexaBotApp.Adapters
             {
                 // Log any leaked exception from the application.
                 logger.LogError($"Exception caught : {exception.Message}");
-
-                // Send a catch-all apology to the user.
-                await turnContext.SendActivityAsync("Sorry, it looks like something went wrong.");
+                await turnContext.SendActivityAsync("<say-as interpret-as=\"interjection\">boom</say-as>, explotó.");
             };
 
-            Use(new AlexaRequestToMessageEventActivitiesMiddleware());
+            ShouldEndSessionByDefault = false;
+            ConvertBotBuilderCardsToAlexaCards = true;
+
+            Use(new AlexaIntentRequestToMessageActivityMiddleware(
+                transformPattern: RequestTransformPatterns.MessageActivityTextFromSinglePhraseSlotValue));
         }
     }
 }

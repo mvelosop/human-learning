@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Bot.Builder.Community.Adapters.Alexa;
 namespace AlexaBotApp.Bots
 {
     public class AlexaBot : ActivityHandler
@@ -65,6 +65,17 @@ namespace AlexaBotApp.Bots
         public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
         {
             await _objectLogger.LogObjectAsync(turnContext.Activity, turnContext.Activity.Id);
+
+            switch (turnContext.Activity.Type)
+            {
+                case "LaunchRequest":
+                    await HandleLaunchRequestAsync(turnContext, cancellationToken);
+                    return;
+
+                case "StopIntent":
+                    await turnContext.SendActivityAsync(MessageFactory.Text("Terminando la sesión", inputHint: InputHints.IgnoringInput));
+                    return;
+            }
 
             await base.OnTurnAsync(turnContext, cancellationToken);
 
@@ -305,7 +316,7 @@ namespace AlexaBotApp.Bots
             return text.Substring(newTargetPhraseUtterance.Length).Trim();
         }
 
-        private async Task HandleLaunchRequestAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
+        private async Task HandleLaunchRequestAsync(ITurnContext turnContext, CancellationToken cancellationToken)
         {
             var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
 
