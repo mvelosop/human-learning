@@ -1,63 +1,113 @@
 {
-  "interactionModel": {
-      "languageModel": {
-          "invocationName": "logopeda virtual",
-          "intents": [
-              {
-                  "name": "GetUserIntent",
-                  "slots": [
-                      {
-                          "name": "phrase",
-                          "type": "phrase"
-                      }
-                  ],
-                  "samples": [
-                      "{phrase}"
-                  ]
-              },
-              {
-                  "name": "AMAZON.FallbackIntent",
-                  "samples": []
-              },
-              {
-                  "name": "AMAZON.NavigateHomeIntent",
-                  "samples": []
-              },
-              {
-                  "name": "AMAZON.CancelIntent",
-                  "samples": []
-              },
-              {
-                  "name": "AMAZON.HelpIntent",
-                  "samples": []
-              },
-              {
-                  "name": "AMAZON.StopIntent",
-                  "samples": []
-              }
-          ],
-          "types": [
-              {
-                  "name": "phrase",
-                  "values": [
-                      {
-                          "name": {
-                              "value": "hola Alexa"
-                          }
-                      },
-                      {
-                          "name": {
-                              "value": "vas a repetir todo lo que diga verdad"
-                          }
-                      },
-                      {
-                          "name": {
-                              "value": "de qué color es el cielo?"
-                          }
-                      }
-                  ]
-              }
-          ]
-      }
-  }
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "human learning",
+            "intents": [
+                {
+                    "name": "GetUserIntent",
+                    "slots": [
+                        {
+                            "name": "phrase",
+                            "type": "phrase"
+                        }
+                    ],
+                    "samples": [
+                        "{phrase}"
+                    ]
+                },
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": [
+                        "no quiero seguir",
+                        "hasta luego",
+                        "adiós",
+                        "cancela",
+                        "cancelar"
+                    ]
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": [
+                        "párate",
+                        "stop",
+                        "pausa"
+                    ]
+                },
+                {
+                    "name": "AMAZON.MoreIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateSettingsIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NextIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.PageUpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.PageDownIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.PreviousIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.ScrollRightIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.ScrollDownIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.ScrollLeftIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.ScrollUpIntent",
+                    "samples": []
+                }
+            ],
+            "types": [
+                {
+                    "name": "phrase",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "hola Alexa"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "vas a repetir todo lo que diga verdad"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "de qué color es el cielo?"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
 }
