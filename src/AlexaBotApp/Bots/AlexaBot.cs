@@ -13,9 +13,12 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Bot.Builder.Community.Adapters.Alexa;
+using AlexaBotApp.Alexa;
+using System.Collections.Generic;
+
 namespace AlexaBotApp.Bots
 {
-    public class AlexaBot : ActivityHandler
+    public class AlexaBot : AlexaActivityHandler
     {
         private const string newTargetPhraseUtterance = "trabajar";
 
@@ -67,17 +70,6 @@ namespace AlexaBotApp.Bots
         {
             await _objectLogger.LogObjectAsync(turnContext.Activity, turnContext.Activity.Id);
 
-            switch (turnContext.Activity.Type)
-            {
-                case "LaunchRequest":
-                    await HandleLaunchRequestAsync(turnContext, cancellationToken);
-                    return;
-
-                case "StopIntent":
-                    await turnContext.SendActivityAsync(MessageFactory.Text("Terminando la sesión", inputHint: InputHints.IgnoringInput));
-                    return;
-            }
-
             await base.OnTurnAsync(turnContext, cancellationToken);
 
             // ** Save bot state changes
@@ -91,9 +83,9 @@ namespace AlexaBotApp.Bots
 
             switch (turnContext.Activity.Name)
             {
-                case "LaunchRequest":
-                    await HandleLaunchRequestAsync(turnContext, cancellationToken);
-                    return;
+                //case "LaunchRequest":
+                //    await HandleLaunchRequestAsync(turnContext, cancellationToken);
+                //    return;
 
                 case "StopIntent":
                     await turnContext.SendActivityAsync(MessageFactory.Text("Terminando la sesión", inputHint: InputHints.IgnoringInput));
@@ -107,32 +99,33 @@ namespace AlexaBotApp.Bots
 
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
-            var message = turnContext.Activity.Text.ToLower();
+            var message = turnContext.Activity.Text;
             var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
 
             _logger.LogInformation(@"----- Retrieved alexaConversation ({@AlexaConversation})", alexaConversation);
 
-            // ** Handle goodbye message
-            if (message == "adiós")
+
+            switch (turnContext.Activity.Text)
             {
-                // ** Echo user message to monitor
-                await EchoUserMessageAsync(turnContext);
+                // ** Handle goodbye message
+                case AlexaIntents.CancelIntent:
 
-                await turnContext.SendActivityAsync(MessageFactory.Text("Adiós José Manuel! Buenas noches."), cancellationToken);
+                    // ** Echo user message to monitor
+                    await EchoUserMessageAsync(turnContext);
 
-                await ClearConversationAsync(turnContext, "end");
+                    await turnContext.SendActivityAsync(MessageFactory.Text("Adiós José Manuel! Buenas noches."), cancellationToken);
 
-                return;
-            }
+                    await ClearConversationAsync(turnContext, "end");
 
-            if (message == "pausa")
-            {
-                // ** Echo user message to monitor
-                await EchoUserMessageAsync(turnContext);
+                    return;
 
-                await turnContext.SendActivityAsync(MessageFactory.Text("Muy bien, me pongo en pausa y seguimos luego."), cancellationToken);
+                case AlexaIntents.StopIntent:
+                    // ** Echo user message to monitor
+                    await EchoUserMessageAsync(turnContext);
 
-                return;
+                    await turnContext.SendActivityAsync(MessageFactory.Text("Muy bien, me pongo en pausa y seguimos luego."), cancellationToken);
+
+                    return;
             }
 
             var commandConfirmation = string.Empty;
@@ -317,7 +310,10 @@ namespace AlexaBotApp.Bots
             return text.Substring(newTargetPhraseUtterance.Length).Trim();
         }
 
-        private async Task HandleLaunchRequestAsync(ITurnContext turnContext, CancellationToken cancellationToken)
+        protected override async Task OnMembersAddedAsync(
+            IList<ChannelAccount> membersAdded,
+            ITurnContext<IConversationUpdateActivity> turnContext,
+            CancellationToken cancellationToken)
         {
             var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
 
@@ -326,9 +322,9 @@ namespace AlexaBotApp.Bots
                 : $@"Hola, continuamos trabajando la {(alexaConversation.Phrase.Contains(" ") ? "frase" : "palabra")} ""{alexaConversation.Phrase}"". A ver José Manuel, dime ""{alexaConversation.Phrase}""";
 
             DisplayDirective directive = new DisplayDirective()
-                                        {
-                                            Template = GenerateImageTemplate()
-                                        };
+            {
+                Template = GenerateImageTemplate()
+            };
 
             turnContext.AlexaResponseDirectives().Add(directive);
             await turnContext.SendActivityAsync(greetingMessage, cancellationToken: cancellationToken);
@@ -345,12 +341,18 @@ namespace AlexaBotApp.Bots
             var displayTemplate = new DisplayRenderBodyTemplate6()
             {
                 BackButton = BackButtonVisibility.HIDDEN,
-                TextContent = new TextContent() { PrimaryText = new InnerTextContent() { Text = "Human learning" } },
+                TextContent = new TextContent()
+                {
+                    PrimaryText = new InnerTextContent()
+                    {
+                        Text = "Human learning con Alexa"
+                    }
+                },
                 Token = "string",
             };
             displayTemplate.BackgroundImage = new Image()
             {
-                ContentDescription = "background",                
+                ContentDescription = "background",
                 Sources = new ImageSource[]
                     {
                         new ImageSource()
