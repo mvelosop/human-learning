@@ -9,6 +9,7 @@ namespace AlexaBotApp.Alexa
     {
         public const string CancelIntent = "AMAZON.CancelIntent";
         public const string StopIntent = "AMAZON.StopIntent";
+        public const string TrainingIntent = "TrainingIntent";
 
     }
 }
