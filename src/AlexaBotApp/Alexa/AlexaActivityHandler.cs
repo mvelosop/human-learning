@@ -13,22 +13,25 @@ namespace AlexaBotApp.Alexa
 {
     public class AlexaActivityHandler : ActivityHandler
     {
-        public override Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
+        public async override Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
         {
+            await base.OnTurnAsync(turnContext, cancellationToken);
             switch (turnContext.Activity.Type)
             {
                 case ActivityTypes.Message:
-                    return Dispatcher(turnContext, cancellationToken);                    
+                    await Dispatcher(turnContext, cancellationToken);
+                    break;
                 case AlexaRequestType.LaunchRequest:
-                    return OnMembersAddedAsync(
+                    await OnMembersAddedAsync(
                         turnContext.Activity.MembersAdded, new DelegatingTurnContext<IConversationUpdateActivity>(turnContext), cancellationToken);
+                    break;
                 case AlexaRequestType.SessionEndedRequest:
-                    return OnMembersRemovedAsync(
+                    await OnMembersRemovedAsync(
                         turnContext.Activity.MembersRemoved, new DelegatingTurnContext<IConversationUpdateActivity>(turnContext), cancellationToken);
+                    break;
                 default:
                     break;
             }
-            return base.OnTurnAsync(turnContext, cancellationToken);
         }
 
         private Task Dispatcher(ITurnContext turnContext, CancellationToken cancellationToken)

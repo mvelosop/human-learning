@@ -1,5 +1,6 @@
 using AlexaBotApp.Adapters;
 using AlexaBotApp.Bots;
+using AlexaBotApp.Dialogs;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Phonemizer;
 using Bot.Builder.Community.Adapters.Alexa.Integration.AspNet.Core;
@@ -50,11 +51,16 @@ namespace AlexaBotApp
             services.AddSingleton<IStorage, MemoryStorage>();
             services.AddSingleton<UserState>();
             services.AddSingleton<BotStateAccessors>();
+            services.AddSingleton<ConversationState>();
+
             // Conversation reference temporal store
             services.AddSingleton<BotConversation>();
 
+            // Dialogs
+            services.AddTransient<TrainingDialog>();
+
             // Bots
-            services.AddTransient<AlexaBot>();
+            services.AddTransient<AlexaBot<TrainingDialog>>();
             services.AddTransient<MonitorBot>();
 
             // DbContext
@@ -89,6 +95,5 @@ namespace AlexaBotApp
             app.UseWebSockets();
             app.UseMvc();
         }
-
     }
 }

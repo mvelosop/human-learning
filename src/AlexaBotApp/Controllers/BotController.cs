@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AlexaBotApp.Bots;
+using AlexaBotApp.Dialogs;
 using AlexaBotApp.Infrastructure;
 using Bot.Builder.Community.Adapters.Alexa.Integration.AspNet.Core;
 using Microsoft.AspNetCore.Hosting;
@@ -21,7 +22,7 @@ namespace AlexaBotApp.Controllers
     public class BotController : ControllerBase
     {
         private readonly IAlexaHttpAdapter _alexaAdapter;
-        private readonly AlexaBot _alexaBot;
+        private readonly AlexaBot<TrainingDialog> _alexaBot;
         private readonly MonitorBot _monitorBot;
         private readonly IAdapterIntegration _botAdapter;
         private readonly ObjectLogger _objectLogger;
@@ -30,7 +31,7 @@ namespace AlexaBotApp.Controllers
             ObjectLogger objectLogger,
             IAdapterIntegration botAdapter,
             IAlexaHttpAdapter alexaAdapter,
-            AlexaBot alexaBot,
+            AlexaBot<TrainingDialog> alexaBot,
             MonitorBot monitorBot)
         {
             _objectLogger = objectLogger;

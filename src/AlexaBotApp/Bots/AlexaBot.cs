@@ -15,42 +15,25 @@ using System.Threading.Tasks;
 using Bot.Builder.Community.Adapters.Alexa;
 using AlexaBotApp.Alexa;
 using System.Collections.Generic;
+using Microsoft.Bot.Builder.Dialogs;
 
 namespace AlexaBotApp.Bots
 {
-    public class AlexaBot : AlexaActivityHandler
+    public class AlexaBot<T> : AlexaActivityHandler where T : Dialog
     {
-        private const string newTargetPhraseUtterance = "trabajar";
-
-        private static readonly string[] CorrectMessages =
-        {
-            "Excelente, eso estuvo muy bien!",
-            "Perfecto José Manuel, excelente!",
-            "Buenísimo José Manuel, muy bien dicho!",
-        };
-
-        private static readonly string[] TryAgainMessages =
-        {
-            "Una vez más.",
-            "Prueba de nuevo.",
-            "Intenta otra vez.",
-            "Vamos, tú puedes.",
-            "Un poco más rápido.",
-            "Un poco más seguido.",
-            "Otra vez.",
-        };
-
         private readonly BotStateAccessors _accessors;
         private readonly IAdapterIntegration _botAdapter;
         private readonly IConfiguration _configuration;
         private readonly BotConversation _conversation;
-        private readonly ILogger<AlexaBot> _logger;
+        private readonly ILogger<AlexaBot<T>> _logger;
         private readonly IMediator _mediator;
         private readonly ObjectLogger _objectLogger;
+        private readonly T _dialog;
+        private readonly BotState _conversationState;
 
         public AlexaBot(ObjectLogger objectLogger, BotConversation conversation, IAdapterIntegration botAdapter,
                         IConfiguration configuration, BotStateAccessors accessors, IMediator mediator,
-                        ILogger<AlexaBot> logger)
+                        ILogger<AlexaBot<T>> logger, T dialog, ConversationState conversationState)
         {
             _objectLogger = objectLogger;
             _conversation = conversation;
@@ -59,6 +42,8 @@ namespace AlexaBotApp.Bots
             _accessors = accessors;
             _mediator = mediator;
             _logger = logger;
+            _dialog = dialog;
+            _conversationState = conversationState;
         }
 
         public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
@@ -69,6 +54,7 @@ namespace AlexaBotApp.Bots
 
             // ** Save bot state changes
             await _accessors.SaveChangesAsync(turnContext);
+            await _conversationState.SaveChangesAsync(turnContext, false, cancellationToken);
         }
 
         protected override async Task OnEventActivityAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
@@ -83,59 +69,24 @@ namespace AlexaBotApp.Bots
 
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
-            var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
+            DialogSet dialogSet = new DialogSet(_conversationState.CreateProperty<DialogState>("TrainingDialogState"));
+            dialogSet.Add(_dialog);
 
-            _logger.LogInformation(@"----- Retrieved alexaConversation ({@AlexaConversation})", alexaConversation);
+            DialogContext dialogContext =
+                await dialogSet.CreateContextAsync(turnContext, cancellationToken);
 
-            var replyMessage = string.Empty;
+            DialogTurnResult results =
+                await dialogContext.ContinueDialogAsync(cancellationToken);
 
-            if (string.IsNullOrEmpty(alexaConversation.Phrase))
+            if (results.Status == DialogTurnStatus.Empty)
             {
-                replyMessage = "¿Qué palabra vamos a trabajar? Dime la frase o palabra que quieras.";
+                await dialogContext.BeginDialogAsync(_dialog.Id, null, cancellationToken);
             }
-            else
-            {
-                Utterance utterance = await RegisterUtteranceAsync(alexaConversation.CurrentExercise, turnContext.Activity.Text);
-
-                // ** Echo user utterance to monitor
-                await EchoUserUtteranceAsync(turnContext, utterance);
-
-                replyMessage = GetResultMessage(turnContext, alexaConversation);
-                await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
-
-                DisplayDirective directive = new DisplayDirective()
-                {
-                    Template = GenerateImageTemplate6(text: alexaConversation.Phrase)
-                };
-
-                turnContext.AlexaResponseDirectives().Add(directive);
-            }
-            
-            var activity = MessageFactory.Text(replyMessage, inputHint: InputHints.ExpectingInput);
-            await turnContext.SendActivityAsync(activity, cancellationToken);
         }
 
-        protected override async Task OnCreateTrainningIntentActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
+        protected override async Task OnTrainningIntentActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
-            var alexaConversation =  new AlexaConversation();
-
-            // ** Echo user message to monitor
-            await EchoUserMessageAsync(turnContext);
-
-            alexaConversation.Phrase = GetTargetPhrase(turnContext.Activity.Text);
-            alexaConversation.Language = turnContext.Activity.Locale;
-
-            alexaConversation.CurrentExercise = await CreateExerciseAsync(alexaConversation);
-            alexaConversation.Count = 0;
-
-            _logger.LogInformation("----- Current exercise saved ({@AlexaConversation})", alexaConversation);
-
-            await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
-
-            DisplayDirective directive1 = new DisplayDirective() { Template = GenerateImageTemplate6() };
-
-            turnContext.AlexaResponseDirectives().Add(directive1);
-            await turnContext.SendActivityAsync(MessageFactory.Text($@"Muy bien, vamos a trabajar con ""{alexaConversation.Phrase}"". A ver José Manuel, di ""{alexaConversation.Phrase}"" ahora!", inputHint: InputHints.ExpectingInput));
+            throw new NotImplementedException();
         }
 
         protected override async Task OnCancelationIntentActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
@@ -182,11 +133,6 @@ namespace AlexaBotApp.Bots
             await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
         }
 
-        private async Task<Exercise> CreateExerciseAsync(AlexaConversation alexaConversation)
-        {
-            return await _mediator.Send(new CreateExerciseCommand("José Manuel", alexaConversation.Phrase, alexaConversation.Language));
-        }
-
         private async Task DeleteExerciseAsync(int id)
         {
             await _mediator.Send(new DeleteExerciseCommand(id));
@@ -220,69 +166,10 @@ namespace AlexaBotApp.Bots
                 await context.SendActivityAsync($"User said ({turnContext.Activity.Locale}):\n**{turnContext.Activity.Text.ToLowerInvariant()}**");
             });
         }
-
-        private async Task EchoUserUtteranceAsync(ITurnContext<IMessageActivity> turnContext, Utterance utterance)
-        {
-            // ** Nothing to do if no conversation reference
-            if (_conversation.Reference == null) return;
-
-            var botAppId = string.IsNullOrEmpty(_configuration["MicrosoftAppId"]) ? "*" : _configuration["MicrosoftAppId"];
-
-            // ** Send proactive message
-            await _botAdapter.ContinueConversationAsync(botAppId, _conversation.Reference, async (context, token) =>
-            {
-                await context.SendActivityAsync($"User said ({turnContext.Activity.Locale}):\n**{utterance.RecognizedPhrase}** => {utterance.Phonemes} (deviation: {utterance.PercentDeviation}%)");
-            });
-        }
-
+        
         private async Task EndExerciseAsync(int id)
         {
             await _mediator.Send(new EndExerciseCommand(id));
-        }
-
-        private string GetResultMessage(ITurnContext<IMessageActivity> turnContext, AlexaConversation alexaConversation)
-        {
-            alexaConversation.Count++;
-
-            var correct = turnContext.Activity.Text.Equals(alexaConversation.Phrase, StringComparison.InvariantCultureIgnoreCase);
-            var random = new Random();
-
-            var resultMessage = correct
-                ? $"{CorrectMessages[random.Next(0, CorrectMessages.Length - 1)]} Seguimos. Dime otra palabra o frase para trabajar."
-                : $@"Hmmm, entendí: ""{turnContext.Activity.Text}"". {TryAgainMessages[random.Next(0, TryAgainMessages.Length - 1)]}. Dime ""{alexaConversation.Phrase}"" ahora!";
-
-            if (correct)
-            {
-                DisplayDirective directive = new DisplayDirective()
-                {
-                    Template = GenerateImageTemplate6(imageUrl: "https://i.imgur.com/X06zAep.gif")
-                };
-                turnContext.AlexaResponseDirectives().Add(directive);
-                directive = new DisplayDirective()
-                {
-                    Template = GenerateImageTemplate6(imageUrl: "https://i.imgur.com/Se9oYdf.png")
-                };
-                turnContext.AlexaResponseDirectives().Add(directive);
-                alexaConversation.Phrase = null;
-                alexaConversation.CurrentExercise = null;
-            }
-            else
-            {
-                DisplayDirective directive = new DisplayDirective()
-                {
-                    Template = GenerateImageTemplate6(imageUrl: "https://i.imgur.com/JqVX0yM.png")
-                };
-
-                turnContext.AlexaResponseDirectives().Add(directive);
-            }
-            return resultMessage;
-        }
-
-        private string GetTargetPhrase(string text)
-        {
-            if (text.StartsWith(newTargetPhraseUtterance, StringComparison.InvariantCultureIgnoreCase) && text.Length == newTargetPhraseUtterance.Length) return null;
-
-            return text.Substring(newTargetPhraseUtterance.Length).Trim();
         }
 
         protected override async Task OnMembersAddedAsync(IList<ChannelAccount> membersAdded, ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
@@ -295,19 +182,13 @@ namespace AlexaBotApp.Bots
 
             DisplayDirective directive = new DisplayDirective()
             {
-                Template = GenerateImageTemplate6(text: "Human Learning", imageUrl: "~/media/greetings.png")
+                Template = GenerateImageTemplate6(text: "Human Learning", imageUrl: "https://esalcedoost.blob.core.windows.net/public/background.png")
             };
 
             turnContext.AlexaResponseDirectives().Add(directive);
             await turnContext.SendActivityAsync(greetingMessage, cancellationToken: cancellationToken);
         }
-
-        private async Task<Utterance> RegisterUtteranceAsync(Exercise currentExercise, string recognizedPhrase)
-        {
-            _logger.LogInformation(@"----- Registering utterance ""{Utterance}"" for exercise ({@Exercise})", recognizedPhrase, currentExercise);
-            return await _mediator.Send(new RegisterUtteranceCommand(currentExercise.Id, recognizedPhrase));
-        }
-
+        
         private DisplayRenderBodyTemplate6 GenerateImageTemplate6(
             string text = "Human learning con Alexa",
             string imageUrl = "")
