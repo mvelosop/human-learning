@@ -23,7 +23,7 @@ namespace AlexaBotApp.Adapters
                 await turnContext.SendActivityAsync("<say-as interpret-as=\"interjection\">boom</say-as>, explotó.");
             };
 
-            ShouldEndSessionByDefault = false;
+            ShouldEndSessionByDefault = true;
             ConvertBotBuilderCardsToAlexaCards = true;
 
             Use(new AlexaIntentRequestToMessageActivityMiddleware(
