@@ -67,6 +67,9 @@ namespace AlexaBotApp.Bots
         {
             await _objectLogger.LogObjectAsync(turnContext.Activity, turnContext.Activity.Id);
 
+            // ** Echo event information to monitor bot
+            await EchoEventAsync(turnContext);
+
             switch (turnContext.Activity.Type)
             {
                 case "LaunchRequest":
@@ -181,6 +184,7 @@ namespace AlexaBotApp.Bots
             }
 
             var replyMessage = string.Empty;
+            var audio = string.Empty;
 
             if (string.IsNullOrEmpty(alexaConversation.Phrase))
             {
@@ -198,10 +202,46 @@ namespace AlexaBotApp.Bots
                 replyMessage = GetResultMessage(turnContext, alexaConversation);
 
                 await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
+
+                DisplayDirective directive = new DisplayDirective
+                {
+                    Template = GenerateUtteranceTemplate(message, utterance.PercentDeviation)
+                };
+
+                turnContext.AlexaResponseDirectives().Add(directive);
+
+                audio = GetAudio(utterance.PercentDeviation);
             }
 
             var activity = MessageFactory.Text(replyMessage, inputHint: InputHints.ExpectingInput);
             await turnContext.SendActivityAsync(activity, cancellationToken);
+        }
+
+        private string GetAudio(int? percentDeviation)
+        {
+            var percentValue = percentDeviation.Value == 0
+                ? 0
+                : Math.Ceiling(percentDeviation.Value / 10m) * 10;
+
+            var audio = percentValue == 0
+                ? $@"<audio src=""https://alexabotapp-20191208.azurewebsites.net/media/blast+explosion.mp3"" />"
+                : $@"<audio src=""https://alexabotapp-20191208.azurewebsites.net/media/laser-shot.mp3""";
+
+            return audio;
+        }
+
+        private IRenderTemplate GenerateUtteranceTemplate(string message, int? percentDeviation)
+        {
+            if (!percentDeviation.HasValue) return GenerateImageTemplate();
+
+            var percentValue = percentDeviation.Value == 0
+                ? 0
+                : Math.Ceiling(percentDeviation.Value / 10m) * 10;
+
+            var url = $"https://alexabotapp-20191208.azurewebsites.net/media/laser-shot-{percentValue}.gif";
+            //var url = $"https://alexabotapp-20191208.azurewebsites.net/media/SampleVideo_720x480_1mb.mp4";
+
+            return GenerateImageTemplate(message, url);
         }
 
         private async Task ClearConversationAsync(ITurnContext<IMessageActivity> turnContext, string endAction)
@@ -242,7 +282,7 @@ namespace AlexaBotApp.Bots
             await _mediator.Send(new DeleteExerciseCommand(id));
         }
 
-        private async Task EchoEventAsync(ITurnContext<IEventActivity> turnContext)
+        private async Task EchoEventAsync(ITurnContext turnContext)
         {
             // ** Nothing to do if no conversation reference
             if (_conversation.Reference == null) return;
@@ -325,13 +365,13 @@ namespace AlexaBotApp.Bots
                 ? "Hola, soy tu logopeda virtual, tienes que decirme qué frase o palabra vamos a trabajar"
                 : $@"Hola, continuamos trabajando la {(alexaConversation.Phrase.Contains(" ") ? "frase" : "palabra")} ""{alexaConversation.Phrase}"". A ver José Manuel, dime ""{alexaConversation.Phrase}""";
 
-            DisplayDirective directive = new DisplayDirective()
-                                        {
-                                            Template = GenerateImageTemplate()
-                                        };
+            DisplayDirective directive = new DisplayDirective
+            {
+                Template = GenerateImageTemplate("Human Learning", "https://esalcedoost.blob.core.windows.net/public/background.png")
+            };
 
             turnContext.AlexaResponseDirectives().Add(directive);
-            await turnContext.SendActivityAsync(greetingMessage, cancellationToken: cancellationToken);
+            await turnContext.SendActivityAsync(MessageFactory.Text(greetingMessage, inputHint: InputHints.ExpectingInput), cancellationToken: cancellationToken);
         }
 
         private async Task<Utterance> RegisterUtteranceAsync(Exercise currentExercise, string recognizedPhrase)
@@ -340,25 +380,27 @@ namespace AlexaBotApp.Bots
         }
 
 
-        private DisplayRenderBodyTemplate6 GenerateImageTemplate()
+        private DisplayRenderBodyTemplate6 GenerateImageTemplate(string text = "Human Learning", string url = "https://esalcedoost.blob.core.windows.net/public/background.png")
         {
             var displayTemplate = new DisplayRenderBodyTemplate6()
             {
                 BackButton = BackButtonVisibility.HIDDEN,
-                TextContent = new TextContent() { PrimaryText = new InnerTextContent() { Text = "Human learning" } },
+                TextContent = new TextContent() { PrimaryText = new InnerTextContent() { Text = text } },
                 Token = "string",
             };
+
             displayTemplate.BackgroundImage = new Image()
             {
-                ContentDescription = "background",                
+                ContentDescription = "background",
                 Sources = new ImageSource[]
+                {
+                    new ImageSource()
                     {
-                        new ImageSource()
-                        {
-                            Url = "https://i.blogs.es/69fdcc/star-wars-saga/2560_3000.jpg"
-                        }
+                        Url = url
                     }
+                }
             };
+
             return displayTemplate;
         }
     }
