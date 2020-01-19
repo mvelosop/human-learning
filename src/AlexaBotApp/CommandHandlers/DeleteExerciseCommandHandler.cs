@@ -10,9 +10,9 @@ namespace AlexaBotApp.CommandHandlers
 {
     public class DeleteExerciseCommandHandler : IRequestHandler<DeleteExerciseCommand, bool>
     {
-        private readonly SpeechTherapyDbContext _dbContext;
+        private readonly HumanLearningDbContext _dbContext;
 
-        public DeleteExerciseCommandHandler(SpeechTherapyDbContext dbContext)
+        public DeleteExerciseCommandHandler(HumanLearningDbContext dbContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }

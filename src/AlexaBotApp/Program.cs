@@ -34,7 +34,7 @@ namespace AlexaBotApp
                 Log.Information("Migrating database...");
                 using (var scope = builder.Services.CreateScope())
                 {
-                    var dbContext = scope.ServiceProvider.GetService<SpeechTherapyDbContext>();
+                    var dbContext = scope.ServiceProvider.GetService<HumanLearningDbContext>();
                     dbContext.Database.Migrate();
                 }
 

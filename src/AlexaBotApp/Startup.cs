@@ -58,7 +58,7 @@ namespace AlexaBotApp
             services.AddTransient<MonitorBot>();
 
             // DbContext
-            services.AddDbContext<SpeechTherapyDbContext>(builder =>
+            services.AddDbContext<HumanLearningDbContext>(builder =>
             {
                 builder.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
             });

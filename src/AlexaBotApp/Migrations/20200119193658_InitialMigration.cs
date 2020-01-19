@@ -9,11 +9,11 @@ namespace AlexaBotApp.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "SpeechTherapy");
+                name: "HumanLearning");
 
             migrationBuilder.CreateTable(
                 name: "PhraseExercises",
-                schema: "SpeechTherapy",
+                schema: "HumanLearning",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
@@ -22,9 +22,13 @@ namespace AlexaBotApp.Migrations
                     ExerciseDuration = table.Column<TimeSpan>(nullable: true),
                     FinishDate = table.Column<DateTime>(nullable: true),
                     IsFinished = table.Column<bool>(nullable: false),
+                    Language = table.Column<string>(maxLength: 5, nullable: true),
+                    NormalizedPhonemes = table.Column<string>(maxLength: 300, nullable: false),
+                    PersonName = table.Column<string>(maxLength: 100, nullable: false),
+                    Phonemes = table.Column<string>(maxLength: 300, nullable: false),
                     StartDate = table.Column<DateTime>(nullable: true),
                     TargetPhrase = table.Column<string>(maxLength: 150, nullable: false),
-                    WasSuccessfull = table.Column<bool>(nullable: false)
+                    WasSuccessfull = table.Column<bool>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -33,13 +37,17 @@ namespace AlexaBotApp.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Utterances",
-                schema: "SpeechTherapy",
+                schema: "HumanLearning",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Date = table.Column<DateTime>(nullable: false),
                     ExerciseId = table.Column<int>(nullable: false),
+                    LevenshteinDistance = table.Column<int>(nullable: true),
+                    NormalizedPhonemes = table.Column<string>(maxLength: 300, nullable: true),
+                    PercentDeviation = table.Column<int>(nullable: true),
+                    Phonemes = table.Column<string>(maxLength: 300, nullable: true),
                     RecognizedPhrase = table.Column<string>(maxLength: 150, nullable: true)
                 },
                 constraints: table =>
@@ -48,7 +56,7 @@ namespace AlexaBotApp.Migrations
                     table.ForeignKey(
                         name: "FK_Utterances_PhraseExercises_ExerciseId",
                         column: x => x.ExerciseId,
-                        principalSchema: "SpeechTherapy",
+                        principalSchema: "HumanLearning",
                         principalTable: "PhraseExercises",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -56,7 +64,7 @@ namespace AlexaBotApp.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_Utterances_ExerciseId",
-                schema: "SpeechTherapy",
+                schema: "HumanLearning",
                 table: "Utterances",
                 column: "ExerciseId");
         }
@@ -65,11 +73,11 @@ namespace AlexaBotApp.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Utterances",
-                schema: "SpeechTherapy");
+                schema: "HumanLearning");
 
             migrationBuilder.DropTable(
                 name: "PhraseExercises",
-                schema: "SpeechTherapy");
+                schema: "HumanLearning");
         }
     }
 }

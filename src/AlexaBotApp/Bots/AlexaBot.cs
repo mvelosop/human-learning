@@ -13,6 +13,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Bot.Builder.Community.Adapters.Alexa;
+using Newtonsoft.Json.Linq;
+
 namespace AlexaBotApp.Bots
 {
     public class AlexaBot : ActivityHandler
@@ -287,7 +289,9 @@ namespace AlexaBotApp.Bots
             // ** Nothing to do if no conversation reference
             if (_conversation.Reference == null) return;
 
-            var eventValue = JsonConvert.SerializeObject(turnContext.Activity.Value, Formatting.Indented);
+            var channelData = JsonConvert.DeserializeObject<JObject>(JsonConvert.SerializeObject(turnContext.Activity.ChannelData));
+            var requestToken = channelData.SelectToken("Request");
+            var eventValue = JsonConvert.SerializeObject(requestToken, Formatting.Indented);
             var botAppId = string.IsNullOrEmpty(_configuration["MicrosoftAppId"]) ? "*" : _configuration["MicrosoftAppId"];
 
             // ** Send proactive message
