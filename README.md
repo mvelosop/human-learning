@@ -2,6 +2,8 @@
 
 This repo contains the source for the "Human Learning con Alexa" presentation given by [@ESalcedoo](https://twitter.com/ESalcedoo) and myself ([@mvelosop](https://twitter.com/mvelosop)) for the [NetCoreConf Barcelona 2020](https://web.archive.org/web/20200119112154/https://netcoreconf.com/barcelona.html) conference.
 
+Besides the code contributed by [esalcedoo](https://github.com/esalcedoo) in this repo, you can also take a look at her [AlexaEchoBot](https://github.com/esalcedoo/AlexaEchoBot) repo, that she explained, and shows more clearly the core interactions with Alexa.
+
 ## Overview
 
 This is a Proof of Concept (POC) project for a language therapist virtual assistant based on Alexa.
