@@ -1,8 +1,10 @@
-﻿using System;
+﻿using AlexaBotApp.Metrics;
+using MediatR;
+using System;
 
 namespace AlexaBotApp.Commands
 {
-    public class EndExerciseCommand
+    public class EndExerciseCommand : IRequest<Exercise>
     {
         public EndExerciseCommand(int id)
         {

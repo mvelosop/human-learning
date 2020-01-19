@@ -1,8 +1,10 @@
-﻿using System;
+﻿using AlexaBotApp.Metrics;
+using MediatR;
+using System;
 
 namespace AlexaBotApp.Commands
 {
-    public class RegisterUtteranceCommand
+    public class RegisterUtteranceCommand : IRequest<Utterance>
     {
         public RegisterUtteranceCommand(int id, string recognizedPhrase)
         {
