@@ -9,7 +9,7 @@ namespace AlexaBotApp.Infrastructure
     {
         public void Configure(EntityTypeBuilder<Exercise> builder)
         {
-            builder.ToTable("PhraseExercises", "SpeechTherapy");
+            builder.ToTable("PhraseExercises", "HumanLearning");
 
             builder.HasKey(e => e.Id);
 

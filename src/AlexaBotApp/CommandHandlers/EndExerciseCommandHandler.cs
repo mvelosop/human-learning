@@ -11,9 +11,9 @@ namespace AlexaBotApp.CommandHandlers
 {
     public class EndExerciseCommandHandler : IRequestHandler<EndExerciseCommand, Exercise>
     {
-        private readonly SpeechTherapyDbContext _dbContext;
+        private readonly HumanLearningDbContext _dbContext;
 
-        public EndExerciseCommandHandler(SpeechTherapyDbContext dbContext)
+        public EndExerciseCommandHandler(HumanLearningDbContext dbContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }

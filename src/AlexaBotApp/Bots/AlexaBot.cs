@@ -1,6 +1,7 @@
 using AlexaBotApp.Commands;
 using AlexaBotApp.Infrastructure;
 using AlexaBotApp.Metrics;
+using Bot.Builder.Community.Adapters.Alexa.Directives;
 using MediatR;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration;
@@ -11,6 +12,8 @@ using Newtonsoft.Json;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Bot.Builder.Community.Adapters.Alexa;
+using Newtonsoft.Json.Linq;
 
 namespace AlexaBotApp.Bots
 {
@@ -65,6 +68,20 @@ namespace AlexaBotApp.Bots
         public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
         {
             await _objectLogger.LogObjectAsync(turnContext.Activity, turnContext.Activity.Id);
+
+            // ** Echo event information to monitor bot
+            await EchoEventAsync(turnContext);
+
+            switch (turnContext.Activity.Type)
+            {
+                case "LaunchRequest":
+                    await HandleLaunchRequestAsync(turnContext, cancellationToken);
+                    return;
+
+                case "StopIntent":
+                    await turnContext.SendActivityAsync(MessageFactory.Text("Terminando la sesión", inputHint: InputHints.IgnoringInput));
+                    return;
+            }
 
             await base.OnTurnAsync(turnContext, cancellationToken);
 
@@ -169,6 +186,7 @@ namespace AlexaBotApp.Bots
             }
 
             var replyMessage = string.Empty;
+            var audio = string.Empty;
 
             if (string.IsNullOrEmpty(alexaConversation.Phrase))
             {
@@ -186,10 +204,46 @@ namespace AlexaBotApp.Bots
                 replyMessage = GetResultMessage(turnContext, alexaConversation);
 
                 await _accessors.AlexaConversation.SetAsync(turnContext, alexaConversation);
+
+                DisplayDirective directive = new DisplayDirective
+                {
+                    Template = GenerateUtteranceTemplate(message, utterance.PercentDeviation)
+                };
+
+                turnContext.AlexaResponseDirectives().Add(directive);
+
+                audio = GetAudio(utterance.PercentDeviation);
             }
 
             var activity = MessageFactory.Text(replyMessage, inputHint: InputHints.ExpectingInput);
             await turnContext.SendActivityAsync(activity, cancellationToken);
+        }
+
+        private string GetAudio(int? percentDeviation)
+        {
+            var percentValue = percentDeviation.Value == 0
+                ? 0
+                : Math.Ceiling(percentDeviation.Value / 10m) * 10;
+
+            var audio = percentValue == 0
+                ? $@"<audio src=""https://alexabotapp-20191208.azurewebsites.net/media/blast+explosion.mp3"" />"
+                : $@"<audio src=""https://alexabotapp-20191208.azurewebsites.net/media/laser-shot.mp3""";
+
+            return audio;
+        }
+
+        private IRenderTemplate GenerateUtteranceTemplate(string message, int? percentDeviation)
+        {
+            if (!percentDeviation.HasValue) return GenerateImageTemplate();
+
+            var percentValue = percentDeviation.Value == 0
+                ? 0
+                : Math.Ceiling(percentDeviation.Value / 10m) * 10;
+
+            var url = $"https://alexabotapp-20191208.azurewebsites.net/media/laser-shot-{percentValue}.gif";
+            //var url = $"https://alexabotapp-20191208.azurewebsites.net/media/SampleVideo_720x480_1mb.mp4";
+
+            return GenerateImageTemplate(message, url);
         }
 
         private async Task ClearConversationAsync(ITurnContext<IMessageActivity> turnContext, string endAction)
@@ -230,12 +284,14 @@ namespace AlexaBotApp.Bots
             await _mediator.Send(new DeleteExerciseCommand(id));
         }
 
-        private async Task EchoEventAsync(ITurnContext<IEventActivity> turnContext)
+        private async Task EchoEventAsync(ITurnContext turnContext)
         {
             // ** Nothing to do if no conversation reference
             if (_conversation.Reference == null) return;
 
-            var eventValue = JsonConvert.SerializeObject(turnContext.Activity.Value, Formatting.Indented);
+            var channelData = JsonConvert.DeserializeObject<JObject>(JsonConvert.SerializeObject(turnContext.Activity.ChannelData));
+            var requestToken = channelData.SelectToken("Request");
+            var eventValue = JsonConvert.SerializeObject(requestToken, Formatting.Indented);
             var botAppId = string.IsNullOrEmpty(_configuration["MicrosoftAppId"]) ? "*" : _configuration["MicrosoftAppId"];
 
             // ** Send proactive message
@@ -305,7 +361,7 @@ namespace AlexaBotApp.Bots
             return text.Substring(newTargetPhraseUtterance.Length).Trim();
         }
 
-        private async Task HandleLaunchRequestAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
+        private async Task HandleLaunchRequestAsync(ITurnContext turnContext, CancellationToken cancellationToken)
         {
             var alexaConversation = await _accessors.AlexaConversation.GetAsync(turnContext, () => new AlexaConversation());
 
@@ -313,12 +369,43 @@ namespace AlexaBotApp.Bots
                 ? "Hola, soy tu logopeda virtual, tienes que decirme qué frase o palabra vamos a trabajar"
                 : $@"Hola, continuamos trabajando la {(alexaConversation.Phrase.Contains(" ") ? "frase" : "palabra")} ""{alexaConversation.Phrase}"". A ver José Manuel, dime ""{alexaConversation.Phrase}""";
 
-            await turnContext.SendActivityAsync(MessageFactory.Text(greetingMessage, inputHint: InputHints.ExpectingInput));
+            DisplayDirective directive = new DisplayDirective
+            {
+                Template = GenerateImageTemplate("Human Learning", "https://esalcedoost.blob.core.windows.net/public/background.png")
+            };
+
+            turnContext.AlexaResponseDirectives().Add(directive);
+            await turnContext.SendActivityAsync(MessageFactory.Text(greetingMessage, inputHint: InputHints.ExpectingInput), cancellationToken: cancellationToken);
         }
 
         private async Task<Utterance> RegisterUtteranceAsync(Exercise currentExercise, string recognizedPhrase)
         {
             return await _mediator.Send(new RegisterUtteranceCommand(currentExercise.Id, recognizedPhrase));
+        }
+
+
+        private DisplayRenderBodyTemplate6 GenerateImageTemplate(string text = "Human Learning", string url = "https://esalcedoost.blob.core.windows.net/public/background.png")
+        {
+            var displayTemplate = new DisplayRenderBodyTemplate6()
+            {
+                BackButton = BackButtonVisibility.HIDDEN,
+                TextContent = new TextContent() { PrimaryText = new InnerTextContent() { Text = text } },
+                Token = "string",
+            };
+
+            displayTemplate.BackgroundImage = new Image()
+            {
+                ContentDescription = "background",
+                Sources = new ImageSource[]
+                {
+                    new ImageSource()
+                    {
+                        Url = url
+                    }
+                }
+            };
+
+            return displayTemplate;
         }
     }
 }

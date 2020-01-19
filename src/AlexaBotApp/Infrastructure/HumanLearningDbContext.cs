@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AlexaBotApp.Infrastructure
 {
-    public class SpeechTherapyDbContext : DbContext
+    public class HumanLearningDbContext : DbContext
     {
-        public SpeechTherapyDbContext(DbContextOptions<SpeechTherapyDbContext> options)
+        public HumanLearningDbContext(DbContextOptions<HumanLearningDbContext> options)
             : base(options)
         {
         }

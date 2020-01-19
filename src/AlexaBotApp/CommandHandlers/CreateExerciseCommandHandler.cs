@@ -12,11 +12,11 @@ namespace AlexaBotApp.CommandHandlers
 {
     public class CreateExerciseCommandHandler : IRequestHandler<CreateExerciseCommand, Exercise>
     {
-        private readonly SpeechTherapyDbContext _dbContext;
+        private readonly HumanLearningDbContext _dbContext;
         private readonly IPhonemizerService _phonemizer;
 
         public CreateExerciseCommandHandler(
-            SpeechTherapyDbContext dbContext,
+            HumanLearningDbContext dbContext,
             IPhonemizerService phonemizer)
         {
             _dbContext = dbContext ?? throw new System.ArgumentNullException(nameof(dbContext));

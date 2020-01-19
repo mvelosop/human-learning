@@ -4,14 +4,16 @@ using AlexaBotApp.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AlexaBotApp.Migrations
 {
-    [DbContext(typeof(SpeechTherapyDbContext))]
-    partial class SpeechTherapyDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(HumanLearningDbContext))]
+    [Migration("20200119193658_InitialMigration")]
+    partial class InitialMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,7 +60,7 @@ namespace AlexaBotApp.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PhraseExercises","SpeechTherapy");
+                    b.ToTable("PhraseExercises","HumanLearning");
                 });
 
             modelBuilder.Entity("AlexaBotApp.Metrics.Utterance", b =>
@@ -88,7 +90,7 @@ namespace AlexaBotApp.Migrations
 
                     b.HasIndex("ExerciseId");
 
-                    b.ToTable("Utterances","SpeechTherapy");
+                    b.ToTable("Utterances","HumanLearning");
                 });
 
             modelBuilder.Entity("AlexaBotApp.Metrics.Utterance", b =>
